@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1f1f1f">
+    <title>Food4Me</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="assets/icons/icon-192.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.svg">
+    <!-- Google Fonts for Roboto -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Google Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header class="app-bar">
+        <h1>Food4Me</h1>
+        <button class="icon-btn nav-menu-toggle" id="nav-menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="app-navigation">
+            <span class="material-icons">menu</span>
+        </button>
+        <nav id="app-navigation" class="app-navigation">
+            <button class="icon-btn" title="Daily Log" id="nav-daily"><span class="material-icons">edit_note</span></button>
+            <button class="icon-btn" title="Calendar" id="nav-calendar"><span class="material-icons">calendar_today</span></button>
+            <button class="icon-btn" title="Vitality" id="nav-vitality"><span class="material-icons">monitor_heart</span></button>
+            <button class="icon-btn" title="Search" id="nav-search"><span class="material-icons">search</span></button>
+            <button class="icon-btn" title="Reports" id="nav-reports"><span class="material-icons">bar_chart</span></button>
+            <button class="icon-btn" title="Suggestions" id="nav-suggestions"><span class="material-icons">lightbulb</span></button>
+            <button class="icon-btn" title="Settings" id="nav-settings"><span class="material-icons">settings</span></button>
+        </nav>
+    </header>
+
+    <main class="container view active" id="view-daily">
+        <header class="view-header">
+            <button class="icon-btn" id="prev-day"><span class="material-icons">chevron_left</span></button>
+            <div class="daily-date-heading">
+                <h2 id="current-date-display">Today</h2>
+                <div class="daily-labels-container" id="daily-group-labels"></div>
+                <div class="daily-vitality-trends" id="daily-vitality-trends"></div>
+            </div>
+            <button class="icon-btn" id="next-day"><span class="material-icons">chevron_right</span></button>
+        </header>
+
+        <!-- Breakfast Card -->
+        <section class="card" id="card-breakfast">
+            <div class="card-header">
+                <h3>Breakfast</h3>
+                <div style="display: flex; gap: var(--spacing-md);">
+                    <label class="toggle">
+                        <input type="checkbox" id="remote-breakfast">
+                        <span class="slider"></span>
+                        <span class="toggle-label">Remote</span>
+                    </label>
+                    <label class="toggle">
+                        <input type="checkbox" id="skip-breakfast">
+                        <span class="slider"></span>
+                        <span class="toggle-label">Skip</span>
+                    </label>
+                </div>
+            </div>
+            <div class="card-content" id="content-breakfast">
+                <div class="meal-summary" id="summary-breakfast" style="display: none;">
+                    <div class="summary-details">
+                        <span class="material-icons meal-icon">breakfast_dining</span>
+                        <div class="summary-text" id="summary-text-breakfast"></div>
+                    </div>
+                    <div style="display: flex; gap: 4px;">
+                        <button class="btn-icon-small edit-meal-btn" data-meal="breakfast" title="Edit Breakfast">
+                            <span class="material-icons">edit</span>
+                        </button>
+                        <button class="btn-icon-small delete-meal-btn" data-meal="breakfast" title="Delete Breakfast">
+                            <span class="material-icons">delete</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="meal-edit-form" id="form-breakfast">
+                    <div class="form-group">
+                        <details class="collapsible-group">
+                            <summary>Items (Select multiple) <span class="material-icons expand-icon">expand_more</span></summary>
+                            <div class="checkbox-group" id="breakfast-items-container">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </details>
+                    </div>
+                    <div class="form-group">
+                        <details class="collapsible-group">
+                            <summary>Coffee (Select multiple) <span class="material-icons expand-icon">expand_more</span></summary>
+                            <div class="checkbox-group" id="breakfast-coffee-container">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </details>
+                    </div>
+                    <div class="form-group">
+                        <details class="collapsible-group">
+                            <summary>Drinks (Select multiple) <span class="material-icons expand-icon">expand_more</span></summary>
+                            <div class="checkbox-group" id="breakfast-drinks-container">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </details>
+                    </div>
+                    <button class="btn btn-primary save-meal-btn" data-meal="breakfast" style="margin-top: var(--spacing-md); width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                        <span class="material-icons">save</span> Save Breakfast
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Lunch Card -->
+        <section class="card" id="card-lunch">
+            <div class="card-header">
+                <h3>Lunch</h3>
+                <div style="display: flex; gap: var(--spacing-md);">
+                    <label class="toggle">
+                        <input type="checkbox" id="remote-lunch">
+                        <span class="slider"></span>
+                        <span class="toggle-label">Remote</span>
+                    </label>
+                    <label class="toggle">
+                        <input type="checkbox" id="skip-lunch">
+                        <span class="slider"></span>
+                        <span class="toggle-label">Skip</span>
+                    </label>
+                </div>
+            </div>
+            <div class="card-content" id="content-lunch">
+                <div class="meal-summary" id="summary-lunch" style="display: none;">
+                    <div class="summary-details">
+                        <span class="material-icons meal-icon">lunch_dining</span>
+                        <div class="summary-text" id="summary-text-lunch"></div>
+                    </div>
+                    <div style="display: flex; gap: 4px;">
+                        <button class="btn-icon-small edit-meal-btn" data-meal="lunch" title="Edit Lunch">
+                            <span class="material-icons">edit</span>
+                        </button>
+                        <button class="btn-icon-small delete-meal-btn" data-meal="lunch" title="Delete Lunch">
+                            <span class="material-icons">delete</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="meal-edit-form" id="form-lunch">
+                    <div class="form-group">
+                        <label for="lunch-soup">Soup</label>
+                        <div class="select-wrapper">
+                            <select id="lunch-soup" class="material-select">
+                                <option value="">None</option>
+                                <!-- Injected dynamically -->
+                            </select>
+                            <span class="material-icons select-arrow">arrow_drop_down</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="lunch-main">Main Course</label>
+                        <div class="select-wrapper">
+                            <select id="lunch-main" class="material-select">
+                                <option value="">None</option>
+                                <!-- Injected dynamically -->
+                            </select>
+                            <span class="material-icons select-arrow">arrow_drop_down</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <details class="collapsible-group">
+                            <summary>Side Dish (Select multiple) <span class="material-icons expand-icon">expand_more</span></summary>
+                            <div class="checkbox-group" id="lunch-sides-container">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </details>
+                    </div>
+                    <div class="form-group">
+                        <label for="lunch-dessert">Dessert</label>
+                        <div class="select-wrapper">
+                            <select id="lunch-dessert" class="material-select">
+                                <option value="">None</option>
+                                <!-- Injected dynamically -->
+                            </select>
+                            <span class="material-icons select-arrow">arrow_drop_down</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <details class="collapsible-group">
+                            <summary>Coffee (Select multiple) <span class="material-icons expand-icon">expand_more</span></summary>
+                            <div class="checkbox-group" id="lunch-coffee-container">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </details>
+                    </div>
+                    <div class="form-group">
+                        <details class="collapsible-group">
+                            <summary>Drinks (Select multiple) <span class="material-icons expand-icon">expand_more</span></summary>
+                            <div class="checkbox-group" id="lunch-drinks-container">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </details>
+                    </div>
+                    <button class="btn btn-primary save-meal-btn" data-meal="lunch" style="margin-top: var(--spacing-md); width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                        <span class="material-icons">save</span> Save Lunch
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dinner Card -->
+        <section class="card" id="card-dinner">
+            <div class="card-header">
+                <h3>Dinner</h3>
+                <div style="display: flex; gap: var(--spacing-md);">
+                    <label class="toggle">
+                        <input type="checkbox" id="remote-dinner">
+                        <span class="slider"></span>
+                        <span class="toggle-label">Remote</span>
+                    </label>
+                    <label class="toggle">
+                        <input type="checkbox" id="skip-dinner">
+                        <span class="slider"></span>
+                        <span class="toggle-label">Skip</span>
+                    </label>
+                </div>
+            </div>
+            <div class="card-content" id="content-dinner">
+                <div class="meal-summary" id="summary-dinner" style="display: none;">
+                    <div class="summary-details">
+                        <span class="material-icons meal-icon">dinner_dining</span>
+                        <div class="summary-text" id="summary-text-dinner"></div>
+                    </div>
+                    <div style="display: flex; gap: 4px;">
+                        <button class="btn-icon-small edit-meal-btn" data-meal="dinner" title="Edit Dinner">
+                            <span class="material-icons">edit</span>
+                        </button>
+                        <button class="btn-icon-small delete-meal-btn" data-meal="dinner" title="Delete Dinner">
+                            <span class="material-icons">delete</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="meal-edit-form" id="form-dinner">
+                    <div class="form-group">
+                        <label for="dinner-soup">Soup</label>
+                        <div class="select-wrapper">
+                            <select id="dinner-soup" class="material-select">
+                                <option value="">None</option>
+                                <!-- Injected dynamically -->
+                            </select>
+                            <span class="material-icons select-arrow">arrow_drop_down</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="dinner-main">Main Course</label>
+                        <div class="select-wrapper">
+                            <select id="dinner-main" class="material-select">
+                                <option value="">None</option>
+                                <!-- Injected dynamically -->
+                            </select>
+                            <span class="material-icons select-arrow">arrow_drop_down</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <details class="collapsible-group">
+                            <summary>Side Dish (Select multiple) <span class="material-icons expand-icon">expand_more</span></summary>
+                            <div class="checkbox-group" id="dinner-sides-container">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </details>
+                    </div>
+                    <div class="form-group">
+                        <label for="dinner-dessert">Dessert</label>
+                        <div class="select-wrapper">
+                            <select id="dinner-dessert" class="material-select">
+                                <option value="">None</option>
+                                <!-- Injected dynamically -->
+                            </select>
+                            <span class="material-icons select-arrow">arrow_drop_down</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <details class="collapsible-group">
+                            <summary>Coffee (Select multiple) <span class="material-icons expand-icon">expand_more</span></summary>
+                            <div class="checkbox-group" id="dinner-coffee-container">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </details>
+                    </div>
+                    <div class="form-group">
+                        <details class="collapsible-group">
+                            <summary>Drinks (Select multiple) <span class="material-icons expand-icon">expand_more</span></summary>
+                            <div class="checkbox-group" id="dinner-drinks-container">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </details>
+                    </div>
+                    <button class="btn btn-primary save-meal-btn" data-meal="dinner" style="margin-top: var(--spacing-md); width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                        <span class="material-icons">save</span> Save Dinner
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Anytime Coffee Card -->
+        <section class="card" id="card-anytime_coffee">
+            <div class="card-header">
+                <h3>Anytime Coffee</h3>
+                <div style="display: flex; gap: var(--spacing-md);">
+                    <label class="toggle">
+                        <input type="checkbox" id="remote-anytime_coffee">
+                        <span class="slider"></span>
+                        <span class="toggle-label">Remote</span>
+                    </label>
+                    <label class="toggle">
+                        <input type="checkbox" id="skip-anytime_coffee">
+                        <span class="slider"></span>
+                        <span class="toggle-label">None</span>
+                    </label>
+                </div>
+            </div>
+            <div class="card-content" id="content-anytime_coffee">
+                <div class="meal-summary" id="summary-anytime_coffee" style="display: none;">
+                    <div class="summary-details">
+                        <span class="material-icons meal-icon">local_cafe</span>
+                        <div class="summary-text" id="summary-text-anytime_coffee"></div>
+                    </div>
+                    <div style="display: flex; gap: 4px;">
+                        <button class="btn-icon-small edit-meal-btn" data-meal="anytime_coffee" title="Edit Coffee">
+                            <span class="material-icons">edit</span>
+                        </button>
+                        <button class="btn-icon-small delete-meal-btn" data-meal="anytime_coffee" title="Delete Coffee">
+                            <span class="material-icons">delete</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="meal-edit-form" id="form-anytime_coffee">
+                    <div class="coffee-entry-editor">
+                        <div class="form-group flex-1">
+                            <label for="anytime_coffee-select">Coffee</label>
+                            <div class="select-wrapper">
+                                <select id="anytime_coffee-select" class="material-select">
+                                    <option value="">None</option>
+                                    <!-- Injected dynamically -->
+                                </select>
+                                <span class="material-icons select-arrow">arrow_drop_down</span>
+                            </div>
+                        </div>
+                        <div class="form-group coffee-time-field">
+                            <label for="anytime_coffee-time">Time</label>
+                            <input type="time" id="anytime_coffee-time" class="material-input">
+                        </div>
+                        <button class="btn" id="btn-add-anytime-coffee" type="button">
+                            <span class="material-icons">add</span>
+                            Add
+                        </button>
+                    </div>
+                    <ul id="anytime_coffee-entries-list" class="coffee-entry-list">
+                        <!-- Injected dynamically -->
+                    </ul>
+                    <div id="anytime_coffee-entries-empty" class="coffee-empty-state">No coffees added.</div>
+                    <div id="anytime_coffee-items-container" style="display: none;">
+                        <!-- Backward-compatible hidden container; no longer used for editing -->
+                    </div>
+                    <button class="btn btn-primary save-meal-btn" data-meal="anytime_coffee" style="margin-top: var(--spacing-md); width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                        <span class="material-icons">save</span> Save Anytime Coffee
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Anytime Snack Card -->
+        <section class="card" id="card-anytime_snack">
+            <div class="card-header">
+                <h3>Anytime Snack</h3>
+                <div style="display: flex; gap: var(--spacing-md);">
+                    <label class="toggle">
+                        <input type="checkbox" id="remote-anytime_snack">
+                        <span class="slider"></span>
+                        <span class="toggle-label">Remote</span>
+                    </label>
+                    <label class="toggle">
+                        <input type="checkbox" id="skip-anytime_snack">
+                        <span class="slider"></span>
+                        <span class="toggle-label">None</span>
+                    </label>
+                </div>
+            </div>
+            <div class="card-content" id="content-anytime_snack">
+                <div class="meal-summary" id="summary-anytime_snack" style="display: none;">
+                    <div class="summary-details">
+                        <span class="material-icons meal-icon">bakery_dining</span>
+                        <div class="summary-text" id="summary-text-anytime_snack"></div>
+                    </div>
+                    <div style="display: flex; gap: 4px;">
+                        <button class="btn-icon-small edit-meal-btn" data-meal="anytime_snack" title="Edit Snack">
+                            <span class="material-icons">edit</span>
+                        </button>
+                        <button class="btn-icon-small delete-meal-btn" data-meal="anytime_snack" title="Delete Snack">
+                            <span class="material-icons">delete</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="meal-edit-form" id="form-anytime_snack">
+                    <div class="coffee-entry-editor">
+                        <div class="form-group flex-1">
+                            <label for="anytime_snack-select">Snack</label>
+                            <div class="select-wrapper">
+                                <select id="anytime_snack-select" class="material-select">
+                                    <option value="">None</option>
+                                    <!-- Injected dynamically -->
+                                </select>
+                                <span class="material-icons select-arrow">arrow_drop_down</span>
+                            </div>
+                        </div>
+                        <div class="form-group coffee-time-field">
+                            <label for="anytime_snack-time">Time</label>
+                            <input type="time" id="anytime_snack-time" class="material-input">
+                        </div>
+                        <button class="btn" id="btn-add-anytime-snack" type="button">
+                            <span class="material-icons">add</span>
+                            Add
+                        </button>
+                    </div>
+                    <ul id="anytime_snack-entries-list" class="coffee-entry-list">
+                        <!-- Injected dynamically -->
+                    </ul>
+                    <div id="anytime_snack-entries-empty" class="coffee-empty-state">No snacks added.</div>
+                    <div id="anytime_snack-items-container" style="display: none;">
+                        <!-- Backward-compatible hidden container; no longer used for editing -->
+                    </div>
+                    <button class="btn btn-primary save-meal-btn" data-meal="anytime_snack" style="margin-top: var(--spacing-md); width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                        <span class="material-icons">save</span> Save Anytime Snack
+                    </button>
+                </div>
+            </div>
+        </section>
+        
+    </main>
+
+    <!-- Vitality View -->
+    <main class="container view" id="view-vitality">
+        <header class="view-header">
+            <h2>Vitality</h2>
+        </header>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>Group Trends</h3>
+            </div>
+            <div class="card-content">
+                <div id="vitality-trends-list" class="vitality-trends-list">
+                    <!-- Injected dynamically -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Calendar View -->
+    <main class="container view" id="view-calendar">
+        <header class="view-header">
+            <button class="icon-btn" id="cal-prev-month"><span class="material-icons">chevron_left</span></button>
+            <h2 id="calendar-month-display">Month Year</h2>
+            <button class="icon-btn" id="cal-next-month"><span class="material-icons">chevron_right</span></button>
+        </header>
+
+        <div class="card">
+            <div class="card-content">
+                <div class="calendar-grid">
+                    <div class="calendar-header-day">Sun</div>
+                    <div class="calendar-header-day">Mon</div>
+                    <div class="calendar-header-day">Tue</div>
+                    <div class="calendar-header-day">Wed</div>
+                    <div class="calendar-header-day">Thu</div>
+                    <div class="calendar-header-day">Fri</div>
+                    <div class="calendar-header-day">Sat</div>
+                    <!-- Calendar days injected dynamically -->
+                </div>
+                <div id="calendar-days-container" class="calendar-grid">
+                    <!-- Days will be generated here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Search View -->
+    <main class="container view" id="view-search">
+        <header class="view-header">
+            <h2>Search Logs</h2>
+        </header>
+
+        <div class="card">
+            <div class="card-content">
+                <div class="form-group">
+                    <label>Search Mode</label>
+                    <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-sm);">
+                        <label class="checkbox-label" style="display: flex; align-items: center;">
+                            <input type="radio" name="search-mode" value="food" checked style="margin-right: 8px;"> Food Item
+                        </label>
+                        <label class="checkbox-label" style="display: flex; align-items: center;">
+                            <input type="radio" name="search-mode" value="ingredients" style="margin-right: 8px;"> Ingredients
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="search-food-group">
+                    <label for="search-food-select">Select Food Item</label>
+                    <div class="select-wrapper">
+                        <select id="search-food-select" class="material-select">
+                            <option value="">-- Select a food item --</option>
+                            <!-- Injected dynamically -->
+                        </select>
+                        <span class="material-icons select-arrow">arrow_drop_down</span>
+                    </div>
+                </div>
+
+                <div class="form-group" id="search-ingredients-group" style="display: none; width: 100%;">
+                    <details class="collapsible-group" open>
+                        <summary>Select Ingredients <span class="material-icons expand-icon">expand_more</span></summary>
+                        <div class="checkbox-group" id="search-ingredients-container">
+                            <!-- Injected dynamically -->
+                        </div>
+                    </details>
+                </div>
+
+                <div class="form-group" style="display: flex; justify-content: space-between; align-items: center;">
+                    <label>Sort Order</label>
+                    <div style="display: flex; gap: 8px;">
+                        <label class="toggle">
+                            <input type="checkbox" id="search-sort-desc" checked>
+                            <span class="slider"></span>
+                            <span class="toggle-label">Newest First</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="search-results-container">
+            <!-- Results injected dynamically -->
+        </div>
+
+        <button class="fab" id="btn-search-scroll-top" style="display: none; z-index: 1000;" title="Scroll to top">
+            <span class="material-icons">keyboard_arrow_up</span>
+        </button>
+    </main>
+
+    <!-- Reports & Statistics View -->
+    <main class="container view" id="view-reports">
+        <header class="view-header">
+            <h2>Reports & Statistics</h2>
+        </header>
+
+        <!-- Date-Range Export -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Date-Range Report Export</h3>
+            </div>
+            <div class="card-content">
+                <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-md); flex-wrap: wrap;">
+                    <div class="form-group flex-1">
+                        <label for="report-start-date">Start Date</label>
+                        <input type="date" id="report-start-date" class="material-input">
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="report-end-date">End Date</label>
+                        <input type="date" id="report-end-date" class="material-input">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Export Format</label>
+                    <div class="select-wrapper">
+                        <select id="report-format" class="material-select">
+                            <option value="json">JSON</option>
+                            <option value="csv">CSV (Semicolon separated)</option>
+                        </select>
+                        <span class="material-icons select-arrow">arrow_drop_down</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" id="btn-export-report" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                    <span class="material-icons">download</span> Download Report
+                </button>
+            </div>
+        </div>
+
+        <!-- Food Statistics -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Food Statistics</h3>
+            </div>
+            <div class="card-content">
+                <div class="form-group">
+                    <label>Analysis Range</label>
+                    <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-sm); flex-wrap: wrap;">
+                        <label class="checkbox-label" style="display: flex; align-items: center;">
+                            <input type="radio" name="stat-range" value="overall" checked style="margin-right: 8px;"> Overall
+                        </label>
+                        <label class="checkbox-label" style="display: flex; align-items: center;">
+                            <input type="radio" name="stat-range" value="daterange" style="margin-right: 8px;"> Date Range
+                        </label>
+                    </div>
+                </div>
+                
+                <div id="stat-date-inputs" style="display: none; gap: var(--spacing-md); margin-bottom: var(--spacing-md); flex-wrap: wrap;">
+                    <div class="form-group flex-1">
+                        <label for="stat-start-date">Start Date</label>
+                        <input type="date" id="stat-start-date" class="material-input">
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="stat-end-date">End Date</label>
+                        <input type="date" id="stat-end-date" class="material-input">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="stat-food-select">Select Food Item</label>
+                    <div class="select-wrapper">
+                        <select id="stat-food-select" class="material-select">
+                            <option value="">-- Select a food item --</option>
+                            <!-- Injected dynamically -->
+                        </select>
+                        <span class="material-icons select-arrow">arrow_drop_down</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="btn-generate-stats" style="width: 100%; margin-bottom: var(--spacing-lg);">Generate Statistics</button>
+
+                <div id="statistics-results" style="display: none;">
+                    <h4 style="margin-bottom: var(--spacing-md); color: var(--primary-color); border-bottom: 1px solid rgba(255,255,255,0.12); padding-bottom: 8px;">Results</h4>
+                    
+                    <div class="stat-row">
+                        <span class="stat-label">Total Consumptions:</span>
+                        <span class="stat-value" id="stat-total-count">0</span>
+                    </div>
+
+                    <div style="margin-top: var(--spacing-md);">
+                        <span class="stat-label">Meal Distribution:</span>
+                        <ul class="material-list" id="stat-meal-dist" style="margin-top: 8px;">
+                            <!-- Injected -->
+                        </ul>
+                    </div>
+
+                    <div style="margin-top: var(--spacing-md);">
+                        <span class="stat-label">Time Distribution (Time of Day):</span>
+                        <ul class="material-list" id="stat-time-dist" style="margin-top: 8px;">
+                            <!-- Injected -->
+                        </ul>
+                    </div>
+
+                    <div style="margin-top: var(--spacing-md);">
+                        <span class="stat-label">Intervals between consumptions (Days):</span>
+                        <ul class="material-list" id="stat-interval-dist" style="margin-top: 8px;">
+                            <!-- Injected -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cumulative Food Distribution -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Cumulative Food Distribution</h3>
+            </div>
+            <div class="card-content">
+                <div class="form-group">
+                    <label>Analysis Range</label>
+                    <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-sm);">
+                        <label class="checkbox-label" style="display: flex; align-items: center;">
+                            <input type="radio" name="dist-range" value="overall" checked style="margin-right: 8px;"> Overall
+                        </label>
+                        <label class="checkbox-label" style="display: flex; align-items: center;">
+                            <input type="radio" name="dist-range" value="daterange" style="margin-right: 8px;"> Date Range
+                        </label>
+                    </div>
+                </div>
+                
+                <div id="dist-date-inputs" style="display: none; gap: var(--spacing-md); margin-bottom: var(--spacing-md); flex-wrap: wrap;">
+                    <div class="form-group flex-1">
+                        <label for="dist-start-date">Start Date</label>
+                        <input type="date" id="dist-start-date" class="material-input">
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="dist-end-date">End Date</label>
+                        <input type="date" id="dist-end-date" class="material-input">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Meal Filter</label>
+                    <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-sm);">
+                        <label class="checkbox-label" style="display: flex; align-items: center;">
+                            <input type="radio" name="dist-meal" value="all" checked style="margin-right: 8px;"> All Meals
+                        </label>
+                        <label class="checkbox-label" style="display: flex; align-items: center;">
+                            <input type="radio" name="dist-meal" value="breakfast" style="margin-right: 8px;"> Breakfast
+                        </label>
+                        <label class="checkbox-label" style="display: flex; align-items: center;">
+                            <input type="radio" name="dist-meal" value="lunch" style="margin-right: 8px;"> Lunch
+                        </label>
+                        <label class="checkbox-label" style="display: flex; align-items: center;">
+                            <input type="radio" name="dist-meal" value="dinner" style="margin-right: 8px;"> Dinner
+                        </label>
+                        <label class="checkbox-label" style="display: flex; align-items: center;">
+                            <input type="radio" name="dist-meal" value="lunch_dinner" style="margin-right: 8px;"> Lunch / Dinner
+                        </label>
+                        <label class="checkbox-label" style="display: flex; align-items: center;">
+                            <input type="radio" name="dist-meal" value="coffee" style="margin-right: 8px;"> Coffee
+                        </label>
+                        <label class="checkbox-label" style="display: flex; align-items: center;">
+                            <input type="radio" name="dist-meal" value="snack" style="margin-right: 8px;"> Snacks
+                        </label>
+                        <label class="checkbox-label" style="display: flex; align-items: center;">
+                            <input type="radio" name="dist-meal" value="ingredients" style="margin-right: 8px;"> Ingredients
+                        </label>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+                    <button class="btn btn-primary" id="btn-generate-dist" style="flex: 1;">Generate Distribution</button>
+                    <button class="btn" id="btn-export-dist" style="flex: 1; border: 1px solid var(--primary-color); color: var(--primary-color); background: transparent; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                        <span class="material-icons">download</span> Download Full CSV
+                    </button>
+                </div>
+                <div class="form-group" style="display: flex; justify-content: flex-end; align-items: center;">
+                    <label class="toggle">
+                        <input type="checkbox" id="dist-log-scale">
+                        <span class="slider"></span>
+                        <span class="toggle-label">Log scale</span>
+                    </label>
+                </div>
+
+                <div id="distribution-results" style="display: none;">
+                    <div id="distribution-aggregate-results">
+                        <div class="distribution-toolbar">
+                            <span id="distribution-top-range" class="distribution-range-label">Top 10</span>
+                            <button class="btn" id="btn-dist-next-top" type="button">
+                                <span class="material-icons">navigate_next</span>
+                                Next 10
+                            </button>
+                        </div>
+                        <canvas id="distribution-chart" width="400" height="300"></canvas>
+                        <canvas id="distribution-chart-least" width="400" height="300" style="margin-top: var(--spacing-lg);"></canvas>
+                    </div>
+
+                    <div id="distribution-granular-results" style="display: none;">
+                        <div class="distribution-chart-group" data-category="breakfast_food">
+                            <div class="distribution-toolbar">
+                                <span id="distribution-breakfast_food-range" class="distribution-range-label">Breakfast Foods</span>
+                                <button class="btn btn-dist-next-granular" type="button" data-category="breakfast_food">
+                                    <span class="material-icons">navigate_next</span>
+                                    Next 10
+                                </button>
+                            </div>
+                            <canvas id="distribution-breakfast-food-chart" width="400" height="300"></canvas>
+                            <canvas id="distribution-breakfast-food-chart-least" width="400" height="300"></canvas>
+                        </div>
+
+                        <div class="distribution-chart-group" data-category="breakfast_coffee">
+                            <div class="distribution-toolbar">
+                                <span id="distribution-breakfast_coffee-range" class="distribution-range-label">Breakfast Coffees</span>
+                                <button class="btn btn-dist-next-granular" type="button" data-category="breakfast_coffee">
+                                    <span class="material-icons">navigate_next</span>
+                                    Next 10
+                                </button>
+                            </div>
+                            <canvas id="distribution-breakfast-coffee-chart" width="400" height="300"></canvas>
+                            <canvas id="distribution-breakfast-coffee-chart-least" width="400" height="300"></canvas>
+                        </div>
+
+                        <div class="distribution-chart-group" data-category="breakfast_drink">
+                            <div class="distribution-toolbar">
+                                <span id="distribution-breakfast_drink-range" class="distribution-range-label">Breakfast Drinks</span>
+                                <button class="btn btn-dist-next-granular" type="button" data-category="breakfast_drink">
+                                    <span class="material-icons">navigate_next</span>
+                                    Next 10
+                                </button>
+                            </div>
+                            <canvas id="distribution-breakfast-drink-chart" width="400" height="300"></canvas>
+                            <canvas id="distribution-breakfast-drink-chart-least" width="400" height="300"></canvas>
+                        </div>
+
+                        <div class="distribution-chart-group" data-category="soup">
+                            <div class="distribution-toolbar">
+                                <span id="distribution-soup-range" class="distribution-range-label">Soups</span>
+                                <button class="btn btn-dist-next-granular" type="button" data-category="soup">
+                                    <span class="material-icons">navigate_next</span>
+                                    Next 10
+                                </button>
+                            </div>
+                            <canvas id="distribution-soup-chart" width="400" height="300"></canvas>
+                            <canvas id="distribution-soup-chart-least" width="400" height="300"></canvas>
+                        </div>
+
+                        <div class="distribution-chart-group" data-category="main">
+                            <div class="distribution-toolbar">
+                                <span id="distribution-main-range" class="distribution-range-label">Main Courses</span>
+                                <button class="btn btn-dist-next-granular" type="button" data-category="main">
+                                    <span class="material-icons">navigate_next</span>
+                                    Next 10
+                                </button>
+                            </div>
+                            <canvas id="distribution-main-chart" width="400" height="300"></canvas>
+                            <canvas id="distribution-main-chart-least" width="400" height="300"></canvas>
+                        </div>
+
+                        <div class="distribution-chart-group" data-category="side">
+                            <div class="distribution-toolbar">
+                                <span id="distribution-side-range" class="distribution-range-label">Side Dishes</span>
+                                <button class="btn btn-dist-next-granular" type="button" data-category="side">
+                                    <span class="material-icons">navigate_next</span>
+                                    Next 10
+                                </button>
+                            </div>
+                            <canvas id="distribution-side-chart" width="400" height="300"></canvas>
+                            <canvas id="distribution-side-chart-least" width="400" height="300"></canvas>
+                        </div>
+
+                        <div class="distribution-chart-group" data-category="dessert">
+                            <div class="distribution-toolbar">
+                                <span id="distribution-dessert-range" class="distribution-range-label">Desserts</span>
+                                <button class="btn btn-dist-next-granular" type="button" data-category="dessert">
+                                    <span class="material-icons">navigate_next</span>
+                                    Next 10
+                                </button>
+                            </div>
+                            <canvas id="distribution-dessert-chart" width="400" height="300"></canvas>
+                            <canvas id="distribution-dessert-chart-least" width="400" height="300"></canvas>
+                        </div>
+
+                        <div class="distribution-chart-group" data-category="coffee">
+                            <div class="distribution-toolbar">
+                                <span id="distribution-coffee-range" class="distribution-range-label">Coffees</span>
+                                <button class="btn btn-dist-next-granular" type="button" data-category="coffee">
+                                    <span class="material-icons">navigate_next</span>
+                                    Next 10
+                                </button>
+                            </div>
+                            <canvas id="distribution-coffee-chart" width="400" height="300"></canvas>
+                            <canvas id="distribution-coffee-chart-least" width="400" height="300"></canvas>
+                        </div>
+
+                        <div class="distribution-chart-group" data-category="drink">
+                            <div class="distribution-toolbar">
+                                <span id="distribution-drink-range" class="distribution-range-label">Drinks</span>
+                                <button class="btn btn-dist-next-granular" type="button" data-category="drink">
+                                    <span class="material-icons">navigate_next</span>
+                                    Next 10
+                                </button>
+                            </div>
+                            <canvas id="distribution-drink-chart" width="400" height="300"></canvas>
+                            <canvas id="distribution-drink-chart-least" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Suggestions View -->
+    <main class="container view" id="view-suggestions">
+        <header class="view-header">
+            <h2>Meal Suggestions</h2>
+        </header>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>Lunch Soup Suggestion</h3>
+            </div>
+            <div class="card-content">
+                <p style="margin-bottom: var(--spacing-md); color: var(--text-secondary);">
+                    Generate a random soup suggestion based on soups you've never tracked, or those you haven't eaten in a long time.
+                </p>
+                <button class="btn btn-primary" id="btn-generate-lunch-soup-suggestion" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: var(--spacing-lg);">
+                    <span class="material-icons">lightbulb</span> Suggest a Soup
+                </button>
+
+                <div id="suggestion-lunch-soup-result" style="display: none; padding: var(--spacing-md); background-color: rgba(187, 134, 252, 0.1); border: 1px solid var(--primary-color); border-radius: var(--border-radius); text-align: center;">
+                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 4px;">How about...</div>
+                    <div id="suggestion-lunch-soup-name" style="font-size: 1.5rem; color: var(--primary-color); font-weight: 500;"></div>
+                </div>
+                <div id="suggestion-lunch-soup-list-container" style="display: none; margin-top: var(--spacing-lg);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
+                        <h4 style="color: var(--text-primary); font-weight: 500; margin: 0;">Further Suggestions</h4>
+                        <button class="btn-icon-small" id="btn-reshuffle-lunch-soup" title="Reshuffle" style="display: none;">
+                            <span class="material-icons">shuffle</span>
+                        </button>
+                    </div>
+                    <ul class="material-list" id="suggestion-lunch-soup-list">
+                        <!-- Injected dynamically -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>Main Course Suggestion</h3>
+            </div>
+            <div class="card-content">
+                <p style="margin-bottom: var(--spacing-md); color: var(--text-secondary);">
+                    Generate a random main course suggestion based on mains you've never tracked, or those you haven't eaten in a long time.
+                </p>
+                <button class="btn btn-primary" id="btn-generate-main-suggestion" style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: var(--spacing-lg);">
+                    <span class="material-icons">lightbulb</span> Suggest a Main Course
+                </button>
+
+                <div id="suggestion-main-result" style="display: none; padding: var(--spacing-md); background-color: rgba(187, 134, 252, 0.1); border: 1px solid var(--primary-color); border-radius: var(--border-radius); text-align: center;">
+                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 4px;">How about...</div>
+                    <div id="suggestion-main-name" style="font-size: 1.5rem; color: var(--primary-color); font-weight: 500;"></div>
+                </div>
+                <div id="suggestion-main-list-container" style="display: none; margin-top: var(--spacing-lg);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-sm);">
+                        <h4 style="color: var(--text-primary); font-weight: 500; margin: 0;">Further Suggestions</h4>
+                        <button class="btn-icon-small" id="btn-reshuffle-main" title="Reshuffle" style="display: none;">
+                            <span class="material-icons">shuffle</span>
+                        </button>
+                    </div>
+                    <ul class="material-list" id="suggestion-main-list">
+                        <!-- Injected dynamically -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <main class="container view" id="view-settings">
+        <header class="view-header">
+            <h2>Settings & Data</h2>
+        </header>
+
+        <!-- Database Backup / Restore -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Database Backup & Restore</h3>
+            </div>
+            <div class="card-content">
+                <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-md); flex-wrap: wrap;">
+                    <div class="form-group flex-1">
+                        <label>Export Database</label>
+                        <div style="display: flex; gap: var(--spacing-sm);">
+                            <div class="select-wrapper" style="flex: 1;">
+                                <select id="db-export-format" class="material-select">
+                                    <option value="json">JSON</option>
+                                    <option value="csv">CSV</option>
+                                </select>
+                                <span class="material-icons select-arrow">arrow_drop_down</span>
+                            </div>
+                            <button class="btn btn-primary" id="btn-db-export" style="display: flex; align-items: center; gap: 4px;">
+                                <span class="material-icons">download</span> Export
+                            </button>
+                        </div>
+                        <div id="download-fallback" class="download-fallback" style="display: none;">
+                            <div class="download-fallback-actions">
+                                <a id="download-fallback-link" class="btn btn-primary" download>
+                                    <span class="material-icons">download</span>
+                                    Open Export
+                                </a>
+                                <button class="btn" id="btn-copy-export" type="button">
+                                    <span class="material-icons">content_copy</span>
+                                    Copy
+                                </button>
+                                <button class="btn-icon-small" id="btn-close-export-fallback" type="button" title="Close export panel">
+                                    <span class="material-icons">close</span>
+                                </button>
+                            </div>
+                            <p class="download-fallback-note">If Safari does not save the file automatically, open the export or copy the content below.</p>
+                            <textarea id="download-fallback-content" class="material-input" readonly></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div style="border-top: 1px solid rgba(255,255,255,0.12); padding-top: var(--spacing-md); margin-top: var(--spacing-md);">
+                    <div class="form-group">
+                        <label>Import Database (Warning: Overwrites current data)</label>
+                        <input type="file" id="db-import-file" accept=".json,.csv" style="margin-bottom: var(--spacing-sm); color: var(--text-primary); width: 100%;">
+                        <button class="btn" id="btn-db-import" style="background-color: var(--error-color); color: #fff; width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                            <span class="material-icons">upload</span> Import & Overwrite
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 style="color: var(--error-color);">Danger Zone</h3>
+            </div>
+            <div class="card-content">
+                <div style="display: flex; gap: var(--spacing-md); flex-wrap: wrap;">
+                    <button class="btn" id="btn-clear-logs" style="flex: 1; background-color: transparent; border: 1px solid var(--error-color); color: var(--error-color); display: flex; justify-content: center; align-items: center; gap: 8px;">
+                        <span class="material-icons">delete_sweep</span> Clear All Logs
+                    </button>
+                    <button class="btn" id="btn-clear-db" style="flex: 1; background-color: var(--error-color); color: #fff; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                        <span class="material-icons">delete_forever</span> Clear Entire Database
+                    </button>
+                </div>
+                <p style="margin-top: var(--spacing-sm); font-size: 0.85rem; color: var(--text-secondary);">
+                    "Clear All Logs" deletes your tracking history but keeps your Food Dictionary. "Clear Entire Database" resets the app completely (including your custom foods).
+                </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>Manage Ingredient Groups</h3>
+            </div>
+            <div class="card-content">
+                <form id="add-group-form" style="display: flex; gap: var(--spacing-sm); margin-bottom: var(--spacing-md);">
+                    <div class="form-group flex-1" style="margin-bottom: 0;">
+                        <input type="text" id="new-group-name" class="material-input" placeholder="e.g., G+" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="height: 100%;">Add Group</button>
+                </form>
+
+                <div class="food-list-container">
+                    <ul id="ingredient-groups-list" class="material-list">
+                        <!-- Injected dynamically -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>Manage Foods</h3>
+            </div>
+            <div class="card-content">
+                <form id="add-food-form" class="add-food-form">
+                    <div class="form-group flex-1">
+                        <label for="new-food-name">Food Name</label>
+                        <input type="text" id="new-food-name" class="material-input" placeholder="e.g., Pancakes" required>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="new-food-category">Category</label>
+                        <div class="select-wrapper">
+                            <select id="new-food-category" class="material-select" required>
+                                <option value="breakfast">Breakfast</option>
+                                <option value="soup">Soup</option>
+                                <option value="main">Main Course</option>
+                                <option value="side">Side Dish</option>
+                                <option value="dessert">Dessert</option>
+                                <option value="coffee">Coffee</option>
+                                <option value="snack">Snacks</option>
+                                <option value="drink">Drinks</option>
+                                <option value="ingredient">Ingredient</option>
+                            </select>
+                            <span class="material-icons select-arrow">arrow_drop_down</span>
+                        </div>
+                    </div>
+                    <div class="form-group flex-1" id="new-food-ingredients-group" style="width: 100%; margin-top: var(--spacing-sm);">
+                        <details class="collapsible-group">
+                            <summary>Ingredients (Select multiple) <span class="material-icons expand-icon">expand_more</span></summary>
+                            <div class="checkbox-group" id="new-food-ingredients-container">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </details>
+                    </div>
+                    <div class="form-group flex-1" id="new-food-groups-group" style="display: none; width: 100%; margin-top: var(--spacing-sm);">
+                        <details class="collapsible-group">
+                            <summary>Ingredient Groups (e.g. G+) <span class="material-icons expand-icon">expand_more</span></summary>
+                            <div class="checkbox-group" id="new-food-groups-container">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </details>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="margin-top: var(--spacing-sm);">Add</button>
+                </form>
+
+                <div class="food-list-container">
+                    <ul id="food-dictionary-list" class="material-list">
+                        <!-- Injected dynamically -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Edit Food Modal -->
+    <div id="edit-food-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content card">
+            <div class="card-header">
+                <h3>Edit Food</h3>
+                <button class="btn-icon-small" id="close-edit-modal" title="Close">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="card-content">
+                <form id="edit-food-form">
+                    <input type="hidden" id="edit-food-id">
+                    <div class="form-group">
+                        <label for="edit-food-name">Food Name</label>
+                        <input type="text" id="edit-food-name" class="material-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit-food-category">Category</label>
+                        <div class="select-wrapper">
+                            <select id="edit-food-category" class="material-select" required>
+                                <option value="breakfast">Breakfast</option>
+                                <option value="soup">Soup</option>
+                                <option value="main">Main Course</option>
+                                <option value="side">Side Dish</option>
+                                <option value="dessert">Dessert</option>
+                                <option value="coffee">Coffee</option>
+                                <option value="snack">Snacks</option>
+                                <option value="drink">Drinks</option>
+                                <option value="ingredient">Ingredient</option>
+                            </select>
+                            <span class="material-icons select-arrow">arrow_drop_down</span>
+                        </div>
+                    </div>
+                    <div class="form-group" id="edit-food-ingredients-group" style="width: 100%; margin-top: var(--spacing-sm);">
+                        <details class="collapsible-group">
+                            <summary>Ingredients (Select multiple) <span class="material-icons expand-icon">expand_more</span></summary>
+                            <div class="checkbox-group" id="edit-food-ingredients-container">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </details>
+                    </div>
+                    <div class="form-group" id="edit-food-groups-group" style="display: none; width: 100%; margin-top: var(--spacing-sm);">
+                        <details class="collapsible-group">
+                            <summary>Ingredient Groups (e.g. G+) <span class="material-icons expand-icon">expand_more</span></summary>
+                            <div class="checkbox-group" id="edit-food-groups-container">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </details>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: var(--spacing-md);">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Group Modal -->
+    <div id="edit-group-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content card">
+            <div class="card-header">
+                <h3>Edit Ingredient Group</h3>
+                <button class="btn-icon-small" id="close-edit-group-modal" title="Close">
+                    <span class="material-icons">close</span>
+                </button>
+            </div>
+            <div class="card-content">
+                <form id="edit-group-form">
+                    <input type="hidden" id="edit-group-id">
+                    <div class="form-group">
+                        <label for="edit-group-name">Group Name</label>
+                        <input type="text" id="edit-group-name" class="material-input" required>
+                    </div>
+                    <div class="form-group" style="width: 100%; margin-top: var(--spacing-sm);">
+                        <details class="collapsible-group" open>
+                            <summary>Assigned Ingredients <span class="material-icons expand-icon">expand_more</span></summary>
+                            <div class="checkbox-group" id="edit-group-ingredients-list-container">
+                                <!-- Injected dynamically -->
+                            </div>
+                        </details>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: var(--spacing-md);">Save Changes</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
