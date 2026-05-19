@@ -86,6 +86,7 @@ This document tracks the implemented features and the overall progress of the Fo
     *   Last hit exactly one day before the selected day: decreasing trend.
     *   Last hit two or more days before the selected day, or no hit yet: neutral trend.
 *   Capped Calendar vitality labels at `++` for compact display while preserving the full streak count for Daily and Vitality trend state.
+*   Collapsed vitality labels above four hits into `+[n]` notation, such as `G+[5]`, to keep long streak labels readable.
 *   Updated trend colors: increasing `+`/`++` and all decreasing states are yellow, increasing `+++` and above is red, and neutral is green.
 *   Added a dedicated Vitality view listing all tracked `+` groups with trend state, latest hit date, and streak details.
 

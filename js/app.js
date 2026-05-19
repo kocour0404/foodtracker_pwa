@@ -164,12 +164,21 @@ function escapeHtml(value) {
 }
 
 export function formatGroupLabel(baseName, streak, maxPluses = Infinity) {
+    if (!Number.isFinite(maxPluses)) {
+        return streak > 4 ? `${baseName}+[${streak}]` : `${baseName}${'+'.repeat(streak)}`;
+    }
+
     const plusCount = Math.min(streak, maxPluses);
     return `${baseName}${'+'.repeat(plusCount)}`;
 }
 
 export function capGroupLabel(label, maxPluses) {
     if (!Number.isFinite(maxPluses)) return label;
+    const compactMatch = String(label).match(/^(.*?)\+\[(\d+)\]$/);
+    if (compactMatch) {
+        return formatGroupLabel(compactMatch[1], Number(compactMatch[2]), maxPluses);
+    }
+
     const match = String(label).match(/^(.*?)(\++)$/);
     if (!match || match[2].length <= maxPluses) return label;
     return `${match[1]}${'+'.repeat(maxPluses)}`;

@@ -167,8 +167,12 @@ describe("database backup CSV", () => {
 describe("vitality labels", () => {
     test("caps calendar labels without changing the source streak", () => {
         expect(formatGroupLabel("G", 4)).toBe("G++++");
+        expect(formatGroupLabel("G", 5)).toBe("G+[5]");
+        expect(formatGroupLabel("G", 12)).toBe("G+[12]");
         expect(formatGroupLabel("G", 4, 2)).toBe("G++");
+        expect(formatGroupLabel("G", 12, 2)).toBe("G++");
         expect(capGroupLabel("G++++", 2)).toBe("G++");
+        expect(capGroupLabel("G+[12]", 2)).toBe("G++");
         expect(capGroupLabel("Neutral", 2)).toBe("Neutral");
     });
 });
