@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { isMealEmpty } from "./app.js";
+import { buildDbBackupCsv, capGroupLabel, formatGroupLabel, isMealEmpty, parseDbBackupCsv } from "./app.js";
 
 describe("isMealEmpty", () => {
     test("should return true if meal is null or undefined", () => {
@@ -125,5 +125,50 @@ describe("isMealEmpty", () => {
             const meal = { drinkIds: [1] };
             expect(isMealEmpty("lunch", meal, false)).toBe(false);
         });
+    });
+});
+
+describe("database backup CSV", () => {
+    test("round-trips groups and food relationships", () => {
+        const foods = [
+            { id: 1, name: "Lunch; Item", category: "main", ingredientIds: [10, 11], groupIds: [] },
+            { id: 10, name: "Ingredient A", category: "ingredient", ingredientIds: [], groupIds: [100] },
+            { id: 11, name: "Ingredient B", category: "ingredient", ingredientIds: [], groupIds: [100, 101] }
+        ];
+        const groups = [
+            { id: 100, name: "G+" },
+            { id: 101, name: "Quoted \"Group\"" }
+        ];
+        const logs = [
+            {
+                date: "2026-05-19",
+                breakfast: { location: "home", skipped: false, items: [1], coffeeIds: [], drinkIds: [] },
+                lunch: { location: "remote", skipped: false, soupId: null, mainId: 1, sideIds: [], dessertId: null, coffeeIds: [], drinkIds: [] }
+            }
+        ];
+
+        const parsed = parseDbBackupCsv(buildDbBackupCsv(foods, groups, logs));
+
+        expect(parsed.groups).toEqual(groups);
+        expect(parsed.foods).toEqual(foods);
+        expect(parsed.logs).toEqual([
+            {
+                date: "2026-05-19",
+                breakfast: { location: "home", skipped: false, items: [1], coffeeIds: [], drinkIds: [] },
+                lunch: { location: "remote", skipped: false, soupId: null, mainId: 1, sideIds: [], dessertId: null, coffeeIds: [], drinkIds: [] },
+                dinner: {},
+                anytime_coffee: {},
+                anytime_snack: {}
+            }
+        ]);
+    });
+});
+
+describe("vitality labels", () => {
+    test("caps calendar labels without changing the source streak", () => {
+        expect(formatGroupLabel("G", 4)).toBe("G++++");
+        expect(formatGroupLabel("G", 4, 2)).toBe("G++");
+        expect(capGroupLabel("G++++", 2)).toBe("G++");
+        expect(capGroupLabel("Neutral", 2)).toBe("Neutral");
     });
 });

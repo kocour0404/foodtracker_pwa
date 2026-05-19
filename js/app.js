@@ -163,18 +163,36 @@ function escapeHtml(value) {
     }[char]));
 }
 
-function renderGroupLabelsHtml(dateStr) {
-    return getGroupLabelsForDate(dateStr)
+export function formatGroupLabel(baseName, streak, maxPluses = Infinity) {
+    const plusCount = Math.min(streak, maxPluses);
+    return `${baseName}${'+'.repeat(plusCount)}`;
+}
+
+export function capGroupLabel(label, maxPluses) {
+    if (!Number.isFinite(maxPluses)) return label;
+    const match = String(label).match(/^(.*?)(\++)$/);
+    if (!match || match[2].length <= maxPluses) return label;
+    return `${match[1]}${'+'.repeat(maxPluses)}`;
+}
+
+function renderGroupLabelsHtml(dateStr, options = {}) {
+    return getGroupLabelsForDate(dateStr, options)
         .map(label => `<span class="group-label">${escapeHtml(label)}</span>`)
         .join('');
 }
 
-function getGroupLabelsForDate(dateStr) {
+function getGroupLabelsForDate(dateStr, options = {}) {
+    const maxPluses = options.maxPluses ?? Infinity;
     if (computedGroupLabelDetails[dateStr]) {
-        return computedGroupLabelDetails[dateStr].map(item => item.label);
+        return computedGroupLabelDetails[dateStr].map(item => {
+            if (item.baseName && item.streak) {
+                return formatGroupLabel(item.baseName, item.streak, maxPluses);
+            }
+            return capGroupLabel(item.label, maxPluses);
+        });
     }
 
-    return computedGroupLabels[dateStr] || [];
+    return (computedGroupLabels[dateStr] || []).map(label => capGroupLabel(label, maxPluses));
 }
 
 function updateDailyGroupLabels() {
@@ -211,7 +229,7 @@ function getVitalityTrendStates(dateStr = formatDateString(currentDate)) {
             if (labelDate > dateStr) break;
             const detail = computedGroupLabelDetails[labelDate]?.find(item => item.groupId === group.id);
             if (detail) {
-                lastHit = { date: labelDate, label: detail.label };
+                lastHit = { date: labelDate, label: detail.label, streak: detail.streak };
             }
         }
 
@@ -234,7 +252,8 @@ function getVitalityTrendStates(dateStr = formatDateString(currentDate)) {
         const trend = daysSince === 0 ? 'increasing' : (daysSince === 1 ? 'decreasing' : 'neutral');
         const trendText = trend === 'increasing' ? 'Zunehmend' : (trend === 'decreasing' ? 'Abnehmend' : 'Neutral');
         const icon = trend === 'increasing' ? 'trending_up' : (trend === 'decreasing' ? 'trending_down' : 'trending_flat');
-        const streak = Math.max(0, lastHit.label.length - baseName.length);
+        const streak = lastHit.streak ?? Math.max(0, lastHit.label.length - baseName.length);
+        const severity = trend === 'increasing' && streak > 2 ? 'high' : 'normal';
 
         return {
             groupId: group.id,
@@ -246,6 +265,7 @@ function getVitalityTrendStates(dateStr = formatDateString(currentDate)) {
             icon,
             daysSince,
             streak,
+            severity,
             lastHitDate: lastHit.date
         };
     });
@@ -253,7 +273,7 @@ function getVitalityTrendStates(dateStr = formatDateString(currentDate)) {
 
 function renderVitalityTrendChip(state) {
     return `
-        <span class="vitality-trend-chip ${state.trend}">
+        <span class="vitality-trend-chip ${state.trend} ${state.severity || 'normal'}">
             <span class="material-icons">${state.icon}</span>
             <span class="vitality-trend-label">${escapeHtml(state.baseName)}</span>
             <span>${escapeHtml(state.trendText)}</span>
@@ -417,7 +437,7 @@ async function renderCalendar() {
         if (dateStr === todayStr) classes.push('today');
         if (loggedSet.has(dateStr)) classes.push('has-log');
 
-        const labelHtml = renderGroupLabelsHtml(dateStr);
+        const labelHtml = renderGroupLabelsHtml(dateStr, { maxPluses: 2 });
 
         html += `<div class="${classes.join(' ')}" data-date="${dateStr}">${i}<div class="calendar-labels-container">${labelHtml}</div></div>`;
     }
@@ -1525,10 +1545,9 @@ async function recalculateGroupStreaks() {
             if (dailyHits.has(g.id)) {
                 currentStreaks[g.id]++;
                 const baseName = g.name.substring(0, g.name.length - 1);
-                const pluses = '+'.repeat(currentStreaks[g.id]);
-                const label = `${baseName}${pluses}`;
+                const label = formatGroupLabel(baseName, currentStreaks[g.id]);
                 labelsForDay.push(label);
-                labelDetailsForDay.push({ groupId: g.id, label });
+                labelDetailsForDay.push({ groupId: g.id, baseName, streak: currentStreaks[g.id], label });
             } else {
                 currentStreaks[g.id] = 0;
             }
@@ -1684,6 +1703,177 @@ function renderDailyLogForms(foods) {
     populateCheckboxes('new-food-ingredients-container', grouped.ingredient);
     populateCheckboxes('edit-food-ingredients-container', grouped.ingredient);
 }
+function csvEscape(value) {
+    const text = value == null ? '' : String(value);
+    if (/[;"\n\r]/.test(text)) {
+        return `"${text.replace(/"/g, '""')}"`;
+    }
+    return text;
+}
+
+function parseCsvLine(line) {
+    const fields = [];
+    let current = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        const next = line[i + 1];
+
+        if (char === '"') {
+            if (inQuotes && next === '"') {
+                current += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (char === ';' && !inQuotes) {
+            fields.push(current);
+            current = '';
+        } else {
+            current += char;
+        }
+    }
+
+    fields.push(current);
+    return fields;
+}
+
+function joinIds(ids) {
+    return Array.isArray(ids) ? ids.join(',') : '';
+}
+
+function parseIds(value) {
+    const text = value ? value.trim() : '';
+    return text ? text.split(',').map(Number).filter(Number.isFinite) : [];
+}
+
+function csvRow(fields) {
+    return fields.map(csvEscape).join(';') + '\n';
+}
+
+export function buildDbBackupCsv(foods = [], groups = [], logs = []) {
+    let csvContent = "";
+
+    // Ingredient Groups: G;id;name
+    groups.forEach(g => {
+        csvContent += csvRow(['G', g.id, g.name]);
+    });
+
+    // Foods: F;id;name;category;ingredientIds;groupIds
+    foods.forEach(f => {
+        csvContent += csvRow(['F', f.id, f.name, f.category, joinIds(f.ingredientIds), joinIds(f.groupIds)]);
+    });
+
+    // Logs:
+    // Breakfast: LB;date;location;skipped;items;coffeeIds;drinkIds
+    // Lunch: LL;date;location;skipped;soupId;mainId;sideIds;dessertId;coffeeIds;drinkIds
+    // Dinner: LD;date;location;skipped;soupId;mainId;sideIds;dessertId;coffeeIds;drinkIds
+    // Anytime Coffee: LC;date;location;skipped;entries (id@HH:MM,id@HH:MM)
+    // Anytime Snack: LS;date;location;skipped;entries (id@HH:MM,id@HH:MM)
+    logs.forEach(l => {
+        const date = l.date;
+        if (l.breakfast) {
+            const b = l.breakfast;
+            csvContent += csvRow(['LB', date, b.location || 'home', b.skipped ? '1' : '0', joinIds(b.items), joinIds(b.coffeeIds), joinIds(b.drinkIds)]);
+        }
+        if (l.lunch) {
+            const lu = l.lunch;
+            csvContent += csvRow(['LL', date, lu.location || 'home', lu.skipped ? '1' : '0', lu.soupId || '', lu.mainId || '', joinIds(lu.sideIds), lu.dessertId || '', joinIds(lu.coffeeIds), joinIds(lu.drinkIds)]);
+        }
+        if (l.dinner) {
+            const d = l.dinner;
+            csvContent += csvRow(['LD', date, d.location || 'home', d.skipped ? '1' : '0', d.soupId || '', d.mainId || '', joinIds(d.sideIds), d.dessertId || '', joinIds(d.coffeeIds), joinIds(d.drinkIds)]);
+        }
+        if (l.anytime_coffee) {
+            const c = l.anytime_coffee;
+            const entries = getAnytimeCoffeeEntriesFromMeal(c).map(entry => `${entry.id}@${entry.time || ''}`).join(',');
+            csvContent += csvRow(['LC', date, c.location || 'home', c.skipped ? '1' : '0', entries]);
+        }
+        if (l.anytime_snack) {
+            const s = l.anytime_snack;
+            const entries = getAnytimeSnackEntriesFromMeal(s).map(entry => `${entry.id}@${entry.time || ''}`).join(',');
+            csvContent += csvRow(['LS', date, s.location || 'home', s.skipped ? '1' : '0', entries]);
+        }
+    });
+
+    return csvContent;
+}
+
+export function parseDbBackupCsv(content) {
+    const foods = [];
+    const groups = [];
+    const logsMap = {};
+
+    content.split(/\r?\n/).forEach(line => {
+        if (!line.trim()) return;
+        const parts = parseCsvLine(line);
+        if (parts.length < 2) return;
+        const type = parts[0];
+
+        if (type === 'G') {
+            groups.push({
+                id: Number(parts[1]),
+                name: parts[2]
+            });
+        } else if (type === 'F') {
+            foods.push({
+                id: Number(parts[1]),
+                name: parts[2],
+                category: parts[3].trim(),
+                ingredientIds: parseIds(parts[4]),
+                groupIds: parseIds(parts[5])
+            });
+        } else if (type === 'LB' || type === 'LL' || type === 'LD' || type === 'LC' || type === 'LS') {
+            const date = parts[1];
+            if (!logsMap[date]) {
+                logsMap[date] = { date: date, breakfast: {}, lunch: {}, dinner: {}, anytime_coffee: {}, anytime_snack: {} };
+            }
+
+            const location = parts[2];
+            const skipped = parts[3] === '1';
+
+            if (type === 'LB') {
+                logsMap[date].breakfast = {
+                    skipped,
+                    location,
+                    items: parseIds(parts[4]),
+                    coffeeIds: parseIds(parts[5]),
+                    drinkIds: parseIds(parts[6])
+                };
+            } else if (type === 'LC') {
+                const entriesStr = parts[4] ? parts[4].trim() : '';
+                const entries = entriesStr ? entriesStr.split(',').map(value => {
+                    const [id, time = ''] = value.split('@');
+                    return { id: Number(id), time };
+                }).filter(entry => entry.id) : [];
+                logsMap[date].anytime_coffee = { skipped, location, entries };
+            } else if (type === 'LS') {
+                const entriesStr = parts[4] ? parts[4].trim() : '';
+                const entries = entriesStr ? entriesStr.split(',').map(value => {
+                    const [id, time = ''] = value.split('@');
+                    return { id: Number(id), time };
+                }).filter(entry => entry.id) : [];
+                logsMap[date].anytime_snack = { skipped, location, entries };
+            } else {
+                const mealName = type === 'LL' ? 'lunch' : 'dinner';
+                logsMap[date][mealName] = {
+                    skipped,
+                    location,
+                    soupId: parts[4] ? Number(parts[4]) : null,
+                    mainId: parts[5] ? Number(parts[5]) : null,
+                    sideIds: parseIds(parts[6]),
+                    dessertId: parts[7] ? Number(parts[7]) : null,
+                    coffeeIds: parseIds(parts[8]),
+                    drinkIds: parseIds(parts[9])
+                };
+            }
+        }
+    });
+
+    return { foods, groups, logs: Object.values(logsMap) };
+}
+
 function initDbBackupRestore() {
     const btnExport = document.getElementById('btn-db-export');
     const btnImport = document.getElementById('btn-db-import');
@@ -1721,57 +1911,15 @@ function initDbBackupRestore() {
         btnExport.addEventListener('click', async () => {
             const format = document.getElementById('db-export-format').value;
             const foods = await getAllFoods(db);
+            const groups = await getAllIngredientGroups(db);
             const logs = await getCachedDailyLogs();
-            const dbDump = { foods, logs };
+            const dbDump = { foods, groups, logs };
 
             if (format === 'json') {
                 const jsonStr = JSON.stringify(dbDump, null, 2);
                 downloadFile(jsonStr, 'food4me_db_backup.json', 'application/json');
             } else if (format === 'csv') {
-                let csvContent = "";
-                // Foods: F;id;name;category
-                foods.forEach(f => {
-                    csvContent += `F;${f.id};${f.name};${f.category}\n`;
-                });
-                
-                // Logs:
-                // Breakfast: LB;date;location;skipped;items;coffeeIds;drinkIds
-                // Lunch: LL;date;location;skipped;soupId;mainId;sideIds;dessertId;coffeeIds;drinkIds
-                // Dinner: LD;date;location;skipped;soupId;mainId;sideIds;dessertId;coffeeIds;drinkIds
-                // Anytime Coffee: LC;date;location;skipped;entries (id@HH:MM,id@HH:MM)
-                // Anytime Snack: LS;date;location;skipped;entries (id@HH:MM,id@HH:MM)
-                logs.forEach(l => {
-                    const date = l.date;
-                    // Breakfast
-                    if (l.breakfast) {
-                        const b = l.breakfast;
-                        csvContent += `LB;${date};${b.location || 'home'};${b.skipped ? '1' : '0'};${b.items ? b.items.join(',') : ''};${b.coffeeIds ? b.coffeeIds.join(',') : ''};${b.drinkIds ? b.drinkIds.join(',') : ''}\n`;
-                    }
-                    // Lunch
-                    if (l.lunch) {
-                        const lu = l.lunch;
-                        csvContent += `LL;${date};${lu.location || 'home'};${lu.skipped ? '1' : '0'};${lu.soupId || ''};${lu.mainId || ''};${lu.sideIds ? lu.sideIds.join(',') : ''};${lu.dessertId || ''};${lu.coffeeIds ? lu.coffeeIds.join(',') : ''};${lu.drinkIds ? lu.drinkIds.join(',') : ''}\n`;
-                    }
-                    // Dinner
-                    if (l.dinner) {
-                        const d = l.dinner;
-                        csvContent += `LD;${date};${d.location || 'home'};${d.skipped ? '1' : '0'};${d.soupId || ''};${d.mainId || ''};${d.sideIds ? d.sideIds.join(',') : ''};${d.dessertId || ''};${d.coffeeIds ? d.coffeeIds.join(',') : ''};${d.drinkIds ? d.drinkIds.join(',') : ''}\n`;
-                    }
-                    // Anytime Coffee
-                    if (l.anytime_coffee) {
-                        const c = l.anytime_coffee;
-                        const entries = getAnytimeCoffeeEntriesFromMeal(c).map(entry => `${entry.id}@${entry.time || ''}`).join(',');
-                        csvContent += `LC;${date};${c.location || 'home'};${c.skipped ? '1' : '0'};${entries}\n`;
-                    }
-                    // Anytime Snack
-                    if (l.anytime_snack) {
-                        const s = l.anytime_snack;
-                        const entries = getAnytimeSnackEntriesFromMeal(s).map(entry => `${entry.id}@${entry.time || ''}`).join(',');
-                        csvContent += `LS;${date};${s.location || 'home'};${s.skipped ? '1' : '0'};${entries}\n`;
-                    }
-                });
-
-                downloadFile(csvContent, 'food4me_db_backup.csv', 'text/csv;charset=utf-8;');
+                downloadFile(buildDbBackupCsv(foods, groups, logs), 'food4me_db_backup.csv', 'text/csv;charset=utf-8;');
             }
         });
     }
@@ -1784,7 +1932,7 @@ function initDbBackupRestore() {
                 return;
             }
 
-            if (!confirm("WARNING: This will erase all current foods and logs, and replace them with the imported data. Are you sure?")) {
+            if (!confirm("WARNING: This will erase all current foods, groups, and logs, and replace them with the imported data. Are you sure?")) {
                 return;
             }
 
@@ -1793,82 +1941,25 @@ function initDbBackupRestore() {
                 try {
                     const content = e.target.result;
                     let newFoods = [];
+                    let newGroups = [];
                     let newLogs = [];
 
                     if (file.name.endsWith('.json')) {
                         const data = JSON.parse(content);
                         if (data.foods) newFoods = data.foods;
+                        if (data.groups) newGroups = data.groups;
+                        if (data.ingredientGroups) newGroups = data.ingredientGroups;
                         if (data.logs) newLogs = data.logs;
                     } else if (file.name.endsWith('.csv')) {
-                        const lines = content.split('\n');
-                        let logsMap = {};
-
-                        lines.forEach(line => {
-                            const parts = line.split(';');
-                            if (parts.length < 2) return;
-                            const type = parts[0];
-
-                            if (type === 'F') {
-                                const ingIdsStr = parts[4] ? parts[4].trim() : '';
-                                const ingredientIds = ingIdsStr ? ingIdsStr.split(',').map(Number) : [];
-                                newFoods.push({
-                                    id: Number(parts[1]),
-                                    name: parts[2],
-                                    category: parts[3].trim(),
-                                    ingredientIds: ingredientIds
-                                });
-                            } else if (type === 'LB' || type === 'LL' || type === 'LD' || type === 'LC' || type === 'LS') {
-                                const date = parts[1];
-                                if (!logsMap[date]) {
-                                    logsMap[date] = { date: date, breakfast: {}, lunch: {}, dinner: {}, anytime_coffee: {}, anytime_snack: {} };
-                                }
-                                
-                                const location = parts[2];
-                                const skipped = parts[3] === '1';
-
-                                if (type === 'LB') {
-                                    const itemsStr = parts[4] ? parts[4].trim() : '';
-                                    const items = itemsStr ? itemsStr.split(',').map(Number) : [];
-                                    const coffeeStr = parts[5] ? parts[5].trim() : '';
-                                    const coffeeIds = coffeeStr ? coffeeStr.split(',').map(Number) : [];
-                                    const drinkStr = parts[6] ? parts[6].trim() : '';
-                                    const drinkIds = drinkStr ? drinkStr.split(',').map(Number) : [];
-                                    logsMap[date].breakfast = { skipped, location, items, coffeeIds, drinkIds };
-                                } else if (type === 'LC') {
-                                    const entriesStr = parts[4] ? parts[4].trim() : '';
-                                    const entries = entriesStr ? entriesStr.split(',').map(value => {
-                                        const [id, time = ''] = value.split('@');
-                                        return { id: Number(id), time };
-                                    }).filter(entry => entry.id) : [];
-                                    logsMap[date].anytime_coffee = { skipped, location, entries };
-                                } else if (type === 'LS') {
-                                    const entriesStr = parts[4] ? parts[4].trim() : '';
-                                    const entries = entriesStr ? entriesStr.split(',').map(value => {
-                                        const [id, time = ''] = value.split('@');
-                                        return { id: Number(id), time };
-                                    }).filter(entry => entry.id) : [];
-                                    logsMap[date].anytime_snack = { skipped, location, entries };
-                                } else {
-                                    const mealName = type === 'LL' ? 'lunch' : 'dinner';
-                                    const soupId = parts[4] ? Number(parts[4]) : null;
-                                    const mainId = parts[5] ? Number(parts[5]) : null;
-                                    const sideIdsStr = parts[6] ? parts[6].trim() : '';
-                                    const sideIds = sideIdsStr ? sideIdsStr.split(',').map(Number) : [];
-                                    const dessertId = parts[7] ? Number(parts[7]) : null;
-                                    const coffeeStr = parts[8] ? parts[8].trim() : '';
-                                    const coffeeIds = coffeeStr ? coffeeStr.split(',').map(Number) : [];
-                                    const drinkStr = parts[9] ? parts[9].trim() : '';
-                                    const drinkIds = drinkStr ? drinkStr.split(',').map(Number) : [];
-                                    
-                                    logsMap[date][mealName] = { skipped, location, soupId, mainId, sideIds, dessertId, coffeeIds, drinkIds };
-                                }
-                            }
-                        });
-                        newLogs = Object.values(logsMap);
+                        const data = parseDbBackupCsv(content);
+                        newFoods = data.foods;
+                        newGroups = data.groups;
+                        newLogs = data.logs;
                     }
 
                     // Perform Restoration
                     await clearDB(db);
+                    for (const g of newGroups) await addIngredientGroup(db, g);
                     for (const f of newFoods) await addFood(db, f);
                     for (const l of newLogs) await saveDailyLog(db, l);
                     cachedDailyLogs = null;
@@ -1877,6 +1968,8 @@ function initDbBackupRestore() {
                     
                     // Refresh state
                     foodDictionary = await getAllFoods(db);
+                    ingredientGroups = await getAllIngredientGroups(db);
+                    await recalculateGroupStreaks();
                     refreshFoodUI();
                     await loadDailyLog(currentDate);
 

@@ -66,9 +66,9 @@ This document tracks the implemented features and the overall progress of the Fo
 
 ## ✅ Phase 6: Import / Export & Polish
 *   Implemented Database Backup & Restore in the Settings view.
-*   Users can export the entire database (Food Dictionary + Daily Logs) to a single JSON or CSV file.
-*   The CSV format is structured specifically (without headers, semicolon separated, no text qualifiers) to encapsulate both the food dictionary rows and the individual meal logs compactly.
-*   Users can import either the JSON or CSV files to completely restore the database state.
+*   Users can export the entire database (Food Dictionary + Ingredient Groups + Daily Logs) to a single JSON or CSV file.
+*   The CSV format is structured specifically (without headers, semicolon separated) to encapsulate ingredient group rows, food dictionary rows with ingredient/group mappings, and individual meal logs compactly.
+*   Users can import either the JSON or CSV files to completely restore the database state, including ingredient groups and vitality mappings.
 *   Added a "Danger Zone" to Settings containing functions to "Clear All Logs" (deletes history, keeps foods) and "Clear Entire Database" (full factory reset including custom foods).
 
 ## ✅ Phase 8: Ingredients System
@@ -85,6 +85,8 @@ This document tracks the implemented features and the overall progress of the Fo
     *   Hit on the selected day: increasing trend.
     *   Last hit exactly one day before the selected day: decreasing trend.
     *   Last hit two or more days before the selected day, or no hit yet: neutral trend.
+*   Capped Calendar vitality labels at `++` for compact display while preserving the full streak count for Daily and Vitality trend state.
+*   Updated trend colors: increasing `+`/`++` and all decreasing states are yellow, increasing `+++` and above is red, and neutral is green.
 *   Added a dedicated Vitality view listing all tracked `+` groups with trend state, latest hit date, and streak details.
 
 ## Completed: Responsive Mobile UI

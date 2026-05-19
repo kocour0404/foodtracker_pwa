@@ -293,8 +293,13 @@ body {
 }
 
 .vitality-trend-chip.increasing {
-    border-color: rgba(76, 175, 80, 0.5);
-    color: #9bd59e;
+    border-color: rgba(255, 183, 77, 0.5);
+    color: #ffcc80;
+}
+
+.vitality-trend-chip.increasing.high {
+    border-color: rgba(244, 67, 54, 0.55);
+    color: #ef9a9a;
 }
 
 .vitality-trend-chip.decreasing {
@@ -303,8 +308,8 @@ body {
 }
 
 .vitality-trend-chip.neutral {
-    border-color: rgba(255, 255, 255, 0.16);
-    color: var(--text-secondary);
+    border-color: rgba(76, 175, 80, 0.5);
+    color: #9bd59e;
 }
 
 .vitality-trend-label {
