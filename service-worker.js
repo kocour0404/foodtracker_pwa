@@ -1,4 +1,4 @@
-const CACHE_NAME = 'food4me-shell-v11';
+const CACHE_NAME = 'food4me-shell-v12';
 const CORE_ASSETS = [
   '/',
   '/index.html',
@@ -6,6 +6,8 @@ const CORE_ASSETS = [
   '/css/style.css',
   '/js/app.js',
   '/js/db.js',
+  '/README.md',
+  '/implementation_plan.md',
   '/assets/icons/icon-192.svg',
   '/assets/icons/icon-512.svg',
   '/assets/icons/icon-maskable-512.svg'

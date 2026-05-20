@@ -917,6 +917,75 @@ input:checked + .slider:before {
     width: 100%;
 }
 
+/* === Markdown Content (Help Section) === */
+.markdown-content {
+    line-height: 1.6;
+}
+
+.markdown-content h2, 
+.markdown-content h3, 
+.markdown-content h4 {
+    margin-top: var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
+    color: var(--primary-color);
+}
+
+.markdown-content h2:first-child,
+.markdown-content h3:first-child {
+    margin-top: 0;
+}
+
+.markdown-content ul {
+    margin-left: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+}
+
+.markdown-content li {
+    margin-bottom: 4px;
+}
+
+.markdown-content code {
+    background-color: var(--surface-color);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.markdown-content a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+.markdown-content a:hover {
+    text-decoration: underline;
+}
+
+.markdown-content p {
+    margin-bottom: var(--spacing-md);
+}
+
+/* === Collapsible Cards === */
+.collapsible-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.collapsible-header:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.collapsible-header .expand-icon {
+    transition: transform 0.3s ease;
+}
+
+.collapsible-card.expanded .expand-icon {
+    transform: rotate(180deg);
+}
+
 @media (max-width: 720px) {
     .app-bar {
         padding: 10px var(--spacing-md);

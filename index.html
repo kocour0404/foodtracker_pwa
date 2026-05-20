@@ -32,6 +32,7 @@
             <button class="icon-btn" title="Reports" id="nav-reports"><span class="material-icons">bar_chart</span></button>
             <button class="icon-btn" title="Suggestions" id="nav-suggestions"><span class="material-icons">lightbulb</span></button>
             <button class="icon-btn" title="Settings" id="nav-settings"><span class="material-icons">settings</span></button>
+            <button class="icon-btn" title="Help" id="nav-help"><span class="material-icons">help_outline</span></button>
         </nav>
     </header>
 
@@ -1069,6 +1070,34 @@
                 </div>
             </div>
         </div>
+    </main>
+
+    <main class="container view" id="view-help">
+        <header class="view-header">
+            <h2>Help & Documentation</h2>
+        </header>
+        <section class="card collapsible-card" id="help-readme-card">
+            <div class="card-header collapsible-header" tabindex="0" role="button" aria-expanded="false" aria-controls="help-readme-content-wrapper">
+                <h3>README</h3>
+                <span class="material-icons expand-icon">expand_more</span>
+            </div>
+            <div class="collapsible-content" id="help-readme-content-wrapper" style="display: none;">
+                <div class="card-content markdown-content" id="help-readme-content">
+                    <p>Loading...</p>
+                </div>
+            </div>
+        </section>
+        <section class="card collapsible-card" id="help-plan-card">
+            <div class="card-header collapsible-header" tabindex="0" role="button" aria-expanded="false" aria-controls="help-plan-content-wrapper">
+                <h3>Implementation Plan</h3>
+                <span class="material-icons expand-icon">expand_more</span>
+            </div>
+            <div class="collapsible-content" id="help-plan-content-wrapper" style="display: none;">
+                <div class="card-content markdown-content" id="help-plan-content">
+                    <p>Loading...</p>
+                </div>
+            </div>
+        </section>
     </main>
 
     <!-- Edit Food Modal -->

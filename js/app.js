@@ -30,7 +30,75 @@ function initServiceWorker() {
 }
 
 
+let helpLoaded = false;
+
+async function loadHelpContent() {
+    if (helpLoaded) return;
+    
+    try {
+        const [readmeRes, planRes] = await Promise.all([
+            fetch('README.md'),
+            fetch('implementation_plan.md')
+        ]);
+        
+        if (readmeRes.ok) {
+            const readmeText = await readmeRes.text();
+            document.getElementById('help-readme-content').innerHTML = parseMarkdown(readmeText);
+        } else {
+            document.getElementById('help-readme-content').innerHTML = '<p>Failed to load README.md</p>';
+        }
+        
+        if (planRes.ok) {
+            const planText = await planRes.text();
+            document.getElementById('help-plan-content').innerHTML = parseMarkdown(planText);
+        } else {
+            document.getElementById('help-plan-content').innerHTML = '<p>Failed to load implementation_plan.md</p>';
+        }
+        
+        helpLoaded = true;
+    } catch (e) {
+        console.error('Error loading help content:', e);
+        document.getElementById('help-readme-content').innerHTML = '<p>Error loading help content.</p>';
+        document.getElementById('help-plan-content').innerHTML = '<p>Error loading help content.</p>';
+    }
+}
+
+function parseMarkdown(text) {
+    let html = text;
+    // Replace headings (up to ###)
+    html = html.replace(/^### (.*$)/gim, '<h4>$1</h4>');
+    html = html.replace(/^## (.*$)/gim, '<h3>$1</h3>');
+    html = html.replace(/^# (.*$)/gim, '<h2>$1</h2>');
+    
+    // Replace bold text
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Replace code blocks / inline code
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    // Replace links
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+    
+    // Replace list items
+    html = html.replace(/^\s*[\*\-] (.*)/gim, '<li>$1</li>');
+    
+    // Wrap lists in <ul> (simple implementation)
+    html = html.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>');
+    // Consolidate adjacent <ul> elements
+    html = html.replace(/<\/ul>\n*<ul>/gs, '');
+
+    // Replace line breaks for paragraphs (if not wrapped in tags)
+    // Basic approach: replace double newlines with <br><br> for simplicity
+    html = html.replace(/\n\n/g, '<br><br>');
+    
+    // Replace single newlines where not inside list items or headers
+    // Doing a clean pass is complex with Regex alone, let's keep it simple.
+    
+    return html;
+}
+
 if (typeof document !== 'undefined') {
+// Ensure initNavigation is called
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Food4Me initializing...');
     
@@ -73,6 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initSearch();
         initReports();
         initSuggestions();
+        initHelpCollapsibles();
         
         // Load today's log
         await loadDailyLog(currentDate);
@@ -323,7 +392,8 @@ function initNavigation() {
         'nav-vitality': 'view-vitality',
         'nav-search': 'view-search',
         'nav-reports': 'view-reports',
-        'nav-suggestions': 'view-suggestions'
+        'nav-suggestions': 'view-suggestions',
+        'nav-help': 'view-help'
     };
 
     document.getElementById('nav-daily').classList.add('active');
@@ -350,6 +420,8 @@ function initNavigation() {
                 await renderCalendar();
             } else if (viewId === 'view-vitality') {
                 renderVitalityView();
+            } else if (viewId === 'view-help') {
+                loadHelpContent();
             }
         });
     }
@@ -2030,6 +2102,30 @@ function initDbBackupRestore() {
 }
 
 // --- Search Logic ---
+
+function initHelpCollapsibles() {
+    const collapsibles = document.querySelectorAll('.collapsible-card');
+    
+    collapsibles.forEach(card => {
+        const header = card.querySelector('.collapsible-header');
+        const content = card.querySelector('.collapsible-content');
+        if (!header || !content) return;
+        
+        header.addEventListener('click', () => {
+            const isExpanded = card.classList.toggle('expanded');
+            content.style.display = isExpanded ? 'block' : 'none';
+            header.setAttribute('aria-expanded', isExpanded.toString());
+        });
+        
+        // Add keyboard support for accessibility
+        header.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                header.click();
+            }
+        });
+    });
+}
 
 function initSearch() {
     const searchSelect = document.getElementById('search-food-select');
