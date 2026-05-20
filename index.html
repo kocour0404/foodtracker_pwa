@@ -9,14 +9,8 @@
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="assets/icons/icon-192.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="assets/icons/icon-192.svg">
-    <!-- Google Fonts for Roboto -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <!-- Google Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- No external libraries/fonts: privacy-first local-only build -->
+    <script src="assets/vendor/chartjs/chart.umd.min.js" defer></script>
 </head>
 <body>
     <header class="app-bar">
@@ -1185,9 +1179,19 @@
         </div>
     </div>
 
+
+    <section class="card" id="privacy-section">
+        <div class="card-header"><h3>Datenschutz</h3></div>
+        <div class="card-content">
+            <p>Diese App bindet keine externen Bibliotheken, Schriftarten oder sonstige Drittanbieter-Ressourcen ein.</p>
+            <p>Es werden keine Analyse-Tracker, Werbe-Tracker oder Telemetrie-Dienste verwendet.</p>
+            <p>Alle erfassten Daten bleiben lokal auf Ihrem Endgerät und werden ausschließlich in der IndexedDB gespeichert. Es findet keine Übertragung an externe Server statt.</p>
+        </div>
+    </section>
+
     <footer class="app-footer">
         <p>
-            <a href="https://github.com/kocour0404/foodtracker_pwa" target="_blank" rel="noopener noreferrer" class="footer-link">
+            <a href="#privacy-section" class="footer-link">Datenschutz</a> · <a href="https://github.com/kocour0404/foodtracker_pwa" target="_blank" rel="noopener noreferrer" class="footer-link">
                 &copy; Stepan Kalina <span id="last-update-date">2026-05-20</span>
             </a>
         </p>

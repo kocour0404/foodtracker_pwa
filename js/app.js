@@ -32,6 +32,23 @@ function initServiceWorker() {
 
 let helpLoaded = false;
 
+function applyLocalIconFallback() {
+    const iconMap = {
+        menu:'☰', close:'✕', edit_note:'📝', calendar_today:'📅', monitor_heart:'❤', search:'🔎', bar_chart:'📊',
+        lightbulb:'💡', settings:'⚙', help_outline:'?', chevron_left:'‹', chevron_right:'›', edit:'✎', delete:'🗑',
+        expand_more:'▾', save:'💾', arrow_drop_down:'▾', breakfast_dining:'🍳', lunch_dining:'🍽', dinner_dining:'🍲',
+        local_cafe:'☕', bakery_dining:'🥐', add:'＋', keyboard_arrow_up:'▴', download:'⬇', navigate_next:'›',
+        shuffle:'🔀', content_copy:'⧉', upload:'⬆', delete_sweep:'🧹', delete_forever:'🚫', arrow_downward:'↓',
+        arrow_upward:'↑', restaurant:'🍴'
+    };
+    document.querySelectorAll('.material-icons').forEach((el) => {
+        const key = (el.textContent || '').trim();
+        if (iconMap[key]) el.textContent = iconMap[key];
+    });
+}
+
+
+
 async function loadHelpContent() {
     if (helpLoaded) return;
     
@@ -102,6 +119,7 @@ if (typeof document !== 'undefined') {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Food4Me initializing...');
     
+    applyLocalIconFallback();
     initServiceWorker();
 
     // Initialize UI
@@ -3011,6 +3029,11 @@ function createDistributionChart(canvasId, data, label, backgroundColor, borderC
     const canvas = document.getElementById(canvasId);
     if (!canvas) return null;
 
+    if (typeof Chart !== 'function') {
+        const host = canvas.parentElement;
+        if (host) host.insertAdjacentHTML('beforeend', '<p style="font-size:0.8rem;color:var(--text-secondary);">Chart-Bibliothek lokal nicht verfügbar.</p>');
+        return null;
+    }
     return new Chart(canvas.getContext('2d'), {
         type: 'bar',
         data: {
