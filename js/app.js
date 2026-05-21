@@ -55,6 +55,13 @@ function applyLocalIconFallback(root = document) {
     });
 }
 
+function setLocalMaterialIcon(icon, iconName) {
+    if (!icon) return;
+    icon.dataset.iconName = iconName;
+    icon.textContent = iconName;
+    applyLocalIconFallback(icon);
+}
+
 
 
 async function loadHelpContent() {
@@ -486,7 +493,7 @@ function closeMobileNavigation() {
     toggle.setAttribute('aria-expanded', 'false');
     toggle.setAttribute('aria-label', 'Open menu');
     const icon = toggle.querySelector('.material-icons');
-    if (icon) icon.textContent = 'menu';
+    setLocalMaterialIcon(icon, 'menu');
 }
 
 function initMobileNavigation() {
@@ -500,7 +507,7 @@ function initMobileNavigation() {
         toggle.setAttribute('aria-expanded', String(isOpen));
         toggle.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
         const icon = toggle.querySelector('.material-icons');
-        if (icon) icon.textContent = isOpen ? 'close' : 'menu';
+        setLocalMaterialIcon(icon, isOpen ? 'close' : 'menu');
     });
 
     document.addEventListener('click', (event) => {
