@@ -1472,6 +1472,7 @@ function renderGroupList(groups) {
         `;
         list.appendChild(li);
     });
+    applyLocalIconFallback(list);
 
     list.querySelectorAll('.edit-group-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -1740,6 +1741,7 @@ function renderDictionaryList(foods) {
         `;
         list.appendChild(li);
     });
+    applyLocalIconFallback(list);
 
     list.querySelectorAll('.edit-food-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {

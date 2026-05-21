@@ -1,10 +1,10 @@
-const CACHE_NAME = 'food4me-shell-v18';
+const CACHE_NAME = 'food4me-shell-v19';
 const CORE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/css/style.css',
-  '/js/app.js?v=18',
+  '/js/app.js?v=19',
   '/js/db.js',
   '/assets/vendor/chartjs/chart.umd.min.js',
   '/README.md',
