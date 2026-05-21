@@ -1298,6 +1298,21 @@ function setSelect(selectId, value) {
 
 // --- Settings Logic ---
 
+const SETTINGS_FOOD_CATEGORIES = [
+    { key: 'breakfast', label: 'Breakfast' },
+    { key: 'soup', label: 'Soup' },
+    { key: 'main', label: 'Main Course' },
+    { key: 'side', label: 'Side Dish' },
+    { key: 'dessert', label: 'Dessert' },
+    { key: 'coffee', label: 'Coffee' },
+    { key: 'snack', label: 'Snacks' },
+    { key: 'drink', label: 'Drinks' },
+    { key: 'ingredient', label: 'Ingredients' }
+];
+
+const openSettingsFoodCategories = new Set();
+const openSettingsListSections = new Set();
+
 function initSettingsForm() {
     const form = document.getElementById('add-food-form');
     const categoryInput = document.getElementById('new-food-category');
@@ -1334,6 +1349,7 @@ function initSettingsForm() {
             nameInput.value = ''; // clear
             document.querySelectorAll('#new-food-ingredients-container input[type="checkbox"]').forEach(cb => cb.checked = false);
             document.querySelectorAll('#new-food-groups-container input[type="checkbox"]').forEach(cb => cb.checked = false);
+            openSettingsFoodCategories.add(category);
             
             foodDictionary = await getAllFoods(db); // update local cache
             refreshFoodUI();
@@ -1387,6 +1403,7 @@ function initSettingsForm() {
             try {
                 await editFood(db, { id, name, category, ingredientIds, groupIds });
                 editModal.style.display = 'none';
+                openSettingsFoodCategories.add(category);
                 
                 foodDictionary = await getAllFoods(db);
                 await recalculateGroupStreaks();
@@ -1451,15 +1468,40 @@ function renderGroupList(groups) {
     list.innerHTML = '';
 
     if (groups.length === 0) {
-        list.innerHTML = '<li style="color: var(--text-secondary)">No groups found. Add some above!</li>';
+        list.innerHTML = '<p style="color: var(--text-secondary); margin: 0;">No groups found. Add some above!</p>';
         return;
     }
+
+    const details = document.createElement('details');
+    details.className = 'settings-list-section';
+    details.dataset.section = 'ingredient-groups';
+    details.open = openSettingsListSections.has('ingredient-groups');
+    details.innerHTML = `
+        <summary>
+            <span class="settings-list-title">
+                Ingredient Groups
+                <span class="settings-list-count">${groups.length} ${groups.length === 1 ? 'entry' : 'entries'}</span>
+            </span>
+            <span class="material-icons expand-icon">expand_more</span>
+        </summary>
+    `;
+
+    details.addEventListener('toggle', () => {
+        if (details.open) {
+            openSettingsListSections.add('ingredient-groups');
+        } else {
+            openSettingsListSections.delete('ingredient-groups');
+        }
+    });
+
+    const groupList = document.createElement('ul');
+    groupList.className = 'material-list';
 
     groups.forEach(group => {
         const li = document.createElement('li');
         li.innerHTML = `
             <div class="list-item-content">
-                <span class="list-item-title">${group.name}</span>
+                <span class="list-item-title">${escapeHtml(group.name)}</span>
             </div>
             <div style="display: flex; gap: 4px;">
                 <button class="btn-icon-small edit-group-btn" data-id="${group.id}" title="Edit">
@@ -1470,8 +1512,10 @@ function renderGroupList(groups) {
                 </button>
             </div>
         `;
-        list.appendChild(li);
+        groupList.appendChild(li);
     });
+    details.appendChild(groupList);
+    list.appendChild(details);
     applyLocalIconFallback(list);
 
     list.querySelectorAll('.edit-group-btn').forEach(btn => {
@@ -1540,6 +1584,7 @@ function initGroupForm() {
             try {
                 await addIngredientGroup(db, { name });
                 nameInput.value = '';
+                openSettingsListSections.add('ingredient-groups');
                 ingredientGroups = await getAllIngredientGroups(db);
                 await recalculateGroupStreaks();
                 refreshFoodUI();
@@ -1709,37 +1754,88 @@ function renderDictionaryList(foods) {
     list.innerHTML = '';
 
     if (foods.length === 0) {
-        list.innerHTML = '<li style="color: var(--text-secondary)">No foods found. Add some above!</li>';
+        list.innerHTML = '<p style="color: var(--text-secondary); margin: 0;">No foods found. Add some above!</p>';
         return;
     }
 
-    foods.forEach(food => {
-        const li = document.createElement('li');
-        let ingredientsHtml = '';
-        if (food.ingredientIds && food.ingredientIds.length > 0) {
-            const ingredientNames = food.ingredientIds.map(id => {
-                const ing = foods.find(f => f.id === id);
-                return ing ? ing.name : 'Unknown';
-            }).join(', ');
-            ingredientsHtml = `<div class="list-item-ingredients" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">Ingredients: ${ingredientNames}</div>`;
+    const foodsByCategory = foods.reduce((grouped, food) => {
+        if (!grouped[food.category]) grouped[food.category] = [];
+        grouped[food.category].push(food);
+        return grouped;
+    }, {});
+
+    Object.values(foodsByCategory).forEach(categoryFoods => {
+        categoryFoods.sort((a, b) => a.name.localeCompare(b.name));
+    });
+
+    const categoryConfigs = [...SETTINGS_FOOD_CATEGORIES];
+    Object.keys(foodsByCategory)
+        .filter(key => !SETTINGS_FOOD_CATEGORIES.some(category => category.key === key))
+        .sort((a, b) => a.localeCompare(b))
+        .forEach(key => categoryConfigs.push({ key, label: key }));
+
+    categoryConfigs.forEach(category => {
+        const categoryFoods = foodsByCategory[category.key] || [];
+        const details = document.createElement('details');
+        details.className = 'settings-list-section';
+        details.dataset.category = category.key;
+        details.open = openSettingsFoodCategories.has(category.key);
+        details.innerHTML = `
+            <summary>
+                <span class="settings-list-title">
+                    ${category.label}
+                    <span class="settings-list-count">${categoryFoods.length} ${categoryFoods.length === 1 ? 'entry' : 'entries'}</span>
+                </span>
+                <span class="material-icons expand-icon">expand_more</span>
+            </summary>
+        `;
+
+        details.addEventListener('toggle', () => {
+            if (details.open) {
+                openSettingsFoodCategories.add(category.key);
+            } else {
+                openSettingsFoodCategories.delete(category.key);
+            }
+        });
+
+        const categoryList = document.createElement('ul');
+        categoryList.className = 'material-list';
+
+        if (categoryFoods.length === 0) {
+            categoryList.innerHTML = '<li style="color: var(--text-secondary)">No entries in this category.</li>';
+        } else {
+            categoryFoods.forEach(food => {
+                const li = document.createElement('li');
+                let ingredientsHtml = '';
+                if (food.ingredientIds && food.ingredientIds.length > 0) {
+                    const ingredientNames = food.ingredientIds.map(id => {
+                        const ing = foods.find(f => f.id === id);
+                        return ing ? ing.name : 'Unknown';
+                    }).join(', ');
+                    ingredientsHtml = `<div class="list-item-ingredients" style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">Ingredients: ${escapeHtml(ingredientNames)}</div>`;
+                }
+
+                li.innerHTML = `
+                    <div class="list-item-content">
+                        <span class="list-item-title">${escapeHtml(food.name)}</span>
+                        <span class="list-item-subtitle">${category.label}</span>
+                        ${ingredientsHtml}
+                    </div>
+                    <div style="display: flex; gap: 4px;">
+                        <button class="btn-icon-small edit-food-btn" data-id="${food.id}" title="Edit">
+                            <span class="material-icons">edit</span>
+                        </button>
+                        <button class="btn-icon-small delete-food-btn" data-id="${food.id}" title="Delete">
+                            <span class="material-icons">delete</span>
+                        </button>
+                    </div>
+                `;
+                categoryList.appendChild(li);
+            });
         }
 
-        li.innerHTML = `
-            <div class="list-item-content">
-                <span class="list-item-title">${food.name}</span>
-                <span class="list-item-subtitle">${food.category}</span>
-                ${ingredientsHtml}
-            </div>
-            <div style="display: flex; gap: 4px;">
-                <button class="btn-icon-small edit-food-btn" data-id="${food.id}" title="Edit">
-                    <span class="material-icons">edit</span>
-                </button>
-                <button class="btn-icon-small delete-food-btn" data-id="${food.id}" title="Delete">
-                    <span class="material-icons">delete</span>
-                </button>
-            </div>
-        `;
-        list.appendChild(li);
+        details.appendChild(categoryList);
+        list.appendChild(details);
     });
     applyLocalIconFallback(list);
 
