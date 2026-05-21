@@ -1441,6 +1441,7 @@ function renderVitalityView() {
             </div>
         `;
     }).join('');
+    applyLocalIconFallback(list);
 }
 
 function renderGroupList(groups) {
