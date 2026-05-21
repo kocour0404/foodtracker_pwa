@@ -1686,11 +1686,11 @@ async function renderMoodView() {
     const list = document.getElementById('mood-notes-list');
     if (!list) return;
 
-    const minPercentage = Number(document.getElementById('mood-filter-rating')?.value || 0);
+    const maxPercentage = Number(document.getElementById('mood-filter-rating')?.value || 100);
     const sortOrder = document.getElementById('mood-sort-order')?.value || 'desc';
     const logs = await getCachedDailyLogs();
     const entries = getMoodNoteEntries(logs)
-        .filter(entry => entry.percentage >= minPercentage)
+        .filter(entry => maxPercentage === 0 || entry.percentage <= maxPercentage)
         .sort((a, b) => {
             const dateCompare = sortOrder === 'asc'
                 ? a.date.localeCompare(b.date)

@@ -155,7 +155,7 @@ This project is licensed under the Apache License 2.0. See [`LICENSE`](LICENSE) 
 ### Completed: Food-Mood Ratings
 *   Added optional 1-5 star Food-Mood ratings to Breakfast, Lunch, Dinner, and Anytime Snack.
 *   Added a Daily header average that only includes captured ratings and shows stars plus percentage.
-*   Added optional internal notes connected to rated Food-Mood entries and a Mood Notes page with rating and date filters.
+*   Added optional internal notes connected to rated Food-Mood entries and a Mood Notes page with maximum-rating and date filters.
 *   Extended database backup CSV export/import to preserve Food-Mood ratings and notes while keeping older CSV files compatible.
 
 ### Completed: Licensing

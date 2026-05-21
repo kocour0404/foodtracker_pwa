@@ -1,10 +1,10 @@
-const CACHE_NAME = 'food4me-shell-v22';
+const CACHE_NAME = 'food4me-shell-v23';
 const CORE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/css/style.css',
-  '/js/app.js?v=22',
+  '/js/app.js?v=23',
   '/js/db.js',
   '/assets/vendor/chartjs/chart.umd.min.js',
   '/README.md',
