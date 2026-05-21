@@ -32,18 +32,26 @@ function initServiceWorker() {
 
 let helpLoaded = false;
 
-function applyLocalIconFallback() {
+function applyLocalIconFallback(root = document) {
     const iconMap = {
         menu:'☰', close:'✕', edit_note:'📝', calendar_today:'📅', monitor_heart:'❤', search:'🔎', bar_chart:'📊',
         lightbulb:'💡', settings:'⚙', help_outline:'?', chevron_left:'‹', chevron_right:'›', edit:'✎', delete:'🗑',
         expand_more:'▾', save:'💾', arrow_drop_down:'▾', breakfast_dining:'🍳', lunch_dining:'🍽', dinner_dining:'🍲',
         local_cafe:'☕', bakery_dining:'🥐', add:'＋', keyboard_arrow_up:'▴', download:'⬇', navigate_next:'›',
         shuffle:'🔀', content_copy:'⧉', upload:'⬆', delete_sweep:'🧹', delete_forever:'🚫', arrow_downward:'↓',
-        arrow_upward:'↑', restaurant:'🍴'
+        arrow_upward:'↑', restaurant:'🍴', trending_up:'↗', trending_down:'↘', trending_flat:'→'
     };
-    document.querySelectorAll('.material-icons').forEach((el) => {
-        const key = (el.textContent || '').trim();
-        if (iconMap[key]) el.textContent = iconMap[key];
+
+    const icons = root instanceof Element && root.matches('.material-icons')
+        ? [root]
+        : Array.from(root.querySelectorAll?.('.material-icons') || []);
+
+    icons.forEach((el) => {
+        const key = (el.dataset.iconName || el.textContent || '').trim();
+        if (!iconMap[key]) return;
+        el.dataset.iconName = key;
+        el.setAttribute('aria-hidden', 'true');
+        el.textContent = iconMap[key];
     });
 }
 
@@ -114,6 +122,28 @@ function parseMarkdown(text) {
     return html;
 }
 
+function initPrivacySection() {
+    const section = document.getElementById('privacy-section');
+    const link = document.getElementById('privacy-footer-link');
+    if (!section || !link) return;
+
+    const setExpanded = (expanded, shouldScroll = false) => {
+        section.hidden = !expanded;
+        link.setAttribute('aria-expanded', String(expanded));
+
+        if (expanded && shouldScroll) {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
+
+    setExpanded(window.location.hash === '#privacy-section');
+
+    link.addEventListener('click', (event) => {
+        event.preventDefault();
+        setExpanded(section.hidden, true);
+    });
+}
+
 if (typeof document !== 'undefined') {
 // Ensure initNavigation is called
 document.addEventListener('DOMContentLoaded', async () => {
@@ -130,6 +160,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initDeleteButtons();
     initAnytimeCoffeeEntries();
     initAnytimeSnackEntries();
+    initPrivacySection();
 
     try {
         // Init Database
@@ -383,6 +414,7 @@ function updateDailyVitalityTrends() {
 
     const states = getVitalityTrendStates();
     container.innerHTML = states.map(renderVitalityTrendChip).join('');
+    applyLocalIconFallback(container);
     container.style.display = states.length ? 'flex' : 'none';
 }
 

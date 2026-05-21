@@ -41,7 +41,7 @@
 ## 3. Architecture & Tech Stack
 *   **Frontend UI:** Vanilla HTML5 and CSS3. Uses a custom Material Design dark theme with CSS Variables for easy maintenance. No heavy frameworks (like React/Angular).
 *   **Responsive UI:** Desktop top navigation switches to a labeled burger menu on small screens. Cards, forms, calendar cells, vitality chips, and report controls adapt for phone-sized layouts.
-*   **Logic:** Vanilla JavaScript (ES6+ modules). Chart.js for distribution graphs.
+*   **Logic:** Vanilla JavaScript (ES6+ modules). Chart.js is vendored locally for distribution graphs; no CDN resources are required.
 *   **Storage:** **IndexedDB** handles structured data, has a large storage limit, and allows for efficient querying (like searching for specific food items across all dates), which is necessary for the search and reporting features.
 *   **Offline Shell:** A service worker caches the application shell for repeat visits.
 
