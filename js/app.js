@@ -8,6 +8,13 @@ let ingredientGroups = [];
 let cachedDailyLogs = null;
 let computedGroupLabels = {};
 let computedGroupLabelDetails = {};
+const FOOD_MOOD_MEALS = ['breakfast', 'lunch', 'dinner', 'anytime_snack'];
+const FOOD_MOOD_MEAL_LABELS = {
+    breakfast: 'Breakfast',
+    lunch: 'Lunch',
+    dinner: 'Dinner',
+    anytime_snack: 'Anytime Snack'
+};
 
 async function getCachedDailyLogs() {
     if (cachedDailyLogs) return cachedDailyLogs;
@@ -41,6 +48,7 @@ function applyLocalIconFallback(root = document) {
         shuffle:'🔀', content_copy:'⧉', upload:'⬆', delete_sweep:'🧹', delete_forever:'🚫', arrow_downward:'↓',
         arrow_upward:'↑', restaurant:'🍴', trending_up:'↗', trending_down:'↘', trending_flat:'→'
     };
+    iconMap.mood = '★';
 
     const icons = root instanceof Element && root.matches('.material-icons')
         ? [root]
@@ -167,6 +175,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initDeleteButtons();
     initAnytimeCoffeeEntries();
     initAnytimeSnackEntries();
+    initFoodMoodRatings();
     initPrivacySection();
 
     try {
@@ -196,6 +205,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         initSaveLog();
         initSearch();
         initReports();
+        initMoodView();
         initSuggestions();
         initHelpCollapsibles();
         
@@ -286,6 +296,35 @@ function escapeHtml(value) {
         '"': '&quot;',
         "'": '&#39;'
     }[char]));
+}
+
+export function normalizeFoodMoodRating(value) {
+    const rating = Number(value);
+    return Number.isInteger(rating) && rating >= 1 && rating <= 5 ? rating : null;
+}
+
+export function calculateDailyFoodMoodRating(log) {
+    const ratings = FOOD_MOOD_MEALS
+        .filter(mealName => log?.[mealName] && !log[mealName].skipped)
+        .map(mealName => normalizeFoodMoodRating(log[mealName].moodRating))
+        .filter(rating => rating !== null);
+
+    if (ratings.length === 0) {
+        return null;
+    }
+
+    const average = ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length;
+    return {
+        average,
+        stars: Math.round(average),
+        percentage: Math.round((average / 5) * 100),
+        count: ratings.length
+    };
+}
+
+function renderFoodMoodStars(stars) {
+    const count = normalizeFoodMoodRating(stars) || 0;
+    return `${'&#9733;'.repeat(count)}${'&#9734;'.repeat(5 - count)}`;
 }
 
 export function formatGroupLabel(baseName, streak, maxPluses = Infinity) {
@@ -425,6 +464,27 @@ function updateDailyVitalityTrends() {
     container.style.display = states.length ? 'flex' : 'none';
 }
 
+function updateDailyFoodMoodRating(log) {
+    const container = document.getElementById('daily-food-mood');
+    if (!container) return;
+
+    const rating = calculateDailyFoodMoodRating(log);
+    if (!rating) {
+        container.innerHTML = '';
+        container.style.display = 'none';
+        return;
+    }
+
+    container.innerHTML = `
+        <span class="food-mood-chip" title="Food-Mood average from ${rating.count} rating${rating.count === 1 ? '' : 's'}">
+            <span class="food-mood-chip-label">Food-Mood</span>
+            <span aria-hidden="true">${renderFoodMoodStars(rating.stars)}</span>
+            <span class="food-mood-chip-value">${rating.average.toFixed(1)}/5 &middot; ${rating.percentage}%</span>
+        </span>
+    `;
+    container.style.display = 'flex';
+}
+
 function initDateNavigation() {
     document.getElementById('prev-day').addEventListener('click', async () => {
         currentDate.setDate(currentDate.getDate() - 1);
@@ -447,6 +507,7 @@ function initNavigation() {
         'nav-settings': 'view-settings',
         'nav-calendar': 'view-calendar',
         'nav-vitality': 'view-vitality',
+        'nav-mood': 'view-mood',
         'nav-search': 'view-search',
         'nav-reports': 'view-reports',
         'nav-suggestions': 'view-suggestions',
@@ -477,6 +538,8 @@ function initNavigation() {
                 await renderCalendar();
             } else if (viewId === 'view-vitality') {
                 renderVitalityView();
+            } else if (viewId === 'view-mood') {
+                await renderMoodView();
             } else if (viewId === 'view-help') {
                 loadHelpContent();
             }
@@ -597,6 +660,63 @@ async function renderCalendar() {
 
 // --- Daily Logging Logic ---
 
+function updateFoodMoodRatingUI(mealName) {
+    const rating = getFoodMoodRating(mealName);
+    const container = document.getElementById(`food-mood-${mealName}`);
+    if (!container) return;
+
+    container.querySelectorAll('label').forEach(label => {
+        const value = Number(label.querySelector('input[type="radio"]')?.value);
+        label.classList.toggle('is-active', rating !== null && value <= rating);
+    });
+}
+
+function initFoodMoodRatings() {
+    FOOD_MOOD_MEALS.forEach(mealName => {
+        const container = document.getElementById(`food-mood-${mealName}`);
+        if (!container) return;
+
+        container.querySelectorAll('input[type="radio"]').forEach(input => {
+            input.addEventListener('change', () => updateFoodMoodRatingUI(mealName));
+        });
+    });
+
+    document.querySelectorAll('.clear-food-mood').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const mealName = btn.getAttribute('data-meal');
+            setFoodMoodRating(mealName, null);
+            setFoodMoodNote(mealName, '');
+        });
+    });
+}
+
+function getFoodMoodRating(mealName) {
+    if (!FOOD_MOOD_MEALS.includes(mealName)) return null;
+    const checked = document.querySelector(`input[name="food-mood-${mealName}"]:checked`);
+    return normalizeFoodMoodRating(checked?.value);
+}
+
+function setFoodMoodRating(mealName, rating) {
+    if (!FOOD_MOOD_MEALS.includes(mealName)) return;
+
+    const normalized = normalizeFoodMoodRating(rating);
+    document.querySelectorAll(`input[name="food-mood-${mealName}"]`).forEach(input => {
+        input.checked = normalized !== null && Number(input.value) === normalized;
+    });
+    updateFoodMoodRatingUI(mealName);
+}
+
+function getFoodMoodNote(mealName) {
+    if (!FOOD_MOOD_MEALS.includes(mealName)) return '';
+    return document.getElementById(`food-mood-note-${mealName}`)?.value.trim() || '';
+}
+
+function setFoodMoodNote(mealName, note) {
+    if (!FOOD_MOOD_MEALS.includes(mealName)) return;
+    const input = document.getElementById(`food-mood-note-${mealName}`);
+    if (input) input.value = note || '';
+}
+
 function initSkipToggles() {
     const setupSkipToggle = (mealName) => {
         const toggle = document.getElementById(`skip-${mealName}`);
@@ -610,7 +730,7 @@ function initSkipToggles() {
                 } else {
                     content.classList.remove('disabled');
                 }
-                const inputs = content.querySelectorAll('input[type="checkbox"]:not([id^="skip-"]), input[type="time"], select, button:not(.save-meal-btn)');
+                const inputs = content.querySelectorAll('input[type="checkbox"]:not([id^="skip-"]), input[type="radio"], input[type="time"], select, textarea, button:not(.save-meal-btn)');
                 inputs.forEach(input => {
                     input.disabled = isSkipped;
                 });
@@ -681,6 +801,7 @@ function initDeleteButtons() {
                 try {
                     if (isLogEmpty(existingLog)) {
                         await deleteDailyLog(db, dateStr);
+                        existingLog = null;
                     } else {
                         await saveDailyLog(db, existingLog);
                     }
@@ -688,7 +809,9 @@ function initDeleteButtons() {
                     await recalculateGroupStreaks();
                     updateDailyGroupLabels();
                     updateDailyVitalityTrends();
+                    updateDailyFoodMoodRating(existingLog);
                     renderVitalityView();
+                    await renderMoodView();
                     await loadDailyLog(currentDate);
                 } catch (err) {
                     console.error('Failed to delete log:', err);
@@ -724,6 +847,7 @@ function initSaveLog() {
             try {
                 if (isLogEmpty(existingLog)) {
                     await deleteDailyLog(db, dateStr);
+                    existingLog = null;
                 } else {
                     await saveDailyLog(db, existingLog);
                 }
@@ -731,11 +855,17 @@ function initSaveLog() {
                 await recalculateGroupStreaks();
                 updateDailyGroupLabels();
                 updateDailyVitalityTrends();
+                updateDailyFoodMoodRating(existingLog);
                 renderVitalityView();
+                await renderMoodView();
 
                 // Switch to summary view
-                updateMealSummary(mealName, existingLog[mealName]);
-                toggleMealView(mealName, 'summary');
+                if (existingLog) {
+                    updateMealSummary(mealName, existingLog[mealName]);
+                    toggleMealView(mealName, 'summary');
+                } else {
+                    await loadDailyLog(currentDate);
+                }
 
             } catch (err) {
                 console.error('Failed to save log:', err);
@@ -749,6 +879,15 @@ function getMealData(mealName, isBreakfast) {
     const skipped = document.getElementById(`skip-${mealName}`).checked;
     const isRemote = document.getElementById(`remote-${mealName}`).checked;
     const location = isRemote ? 'remote' : 'home';
+    const moodRating = getFoodMoodRating(mealName);
+    const moodNote = getFoodMoodNote(mealName);
+    const withMoodRating = (mealData) => {
+        if (moodRating !== null) {
+            mealData.moodRating = moodRating;
+            if (moodNote) mealData.moodNote = moodNote;
+        }
+        return mealData;
+    };
     
     if (skipped) {
         return { skipped: true, location };
@@ -761,16 +900,16 @@ function getMealData(mealName, isBreakfast) {
 
     if (mealName === 'anytime_snack') {
         const entries = getAnytimeSnackEntries();
-        return { skipped: false, location, entries };
+        return withMoodRating({ skipped: false, location, entries });
     }
     
     if (isBreakfast) {
         const items = getCheckedValues(`${mealName}-items-container`);
         const coffeeIds = getCheckedValues(`${mealName}-coffee-container`);
         const drinkIds = getCheckedValues(`${mealName}-drinks-container`);
-        return { skipped: false, location, items, coffeeIds, drinkIds };
+        return withMoodRating({ skipped: false, location, items, coffeeIds, drinkIds });
     } else {
-        return {
+        return withMoodRating({
             skipped: false,
             location,
             soupId: getSelectValue(`${mealName}-soup`),
@@ -779,7 +918,7 @@ function getMealData(mealName, isBreakfast) {
             dessertId: getSelectValue(`${mealName}-dessert`),
             coffeeIds: getCheckedValues(`${mealName}-coffee-container`),
             drinkIds: getCheckedValues(`${mealName}-drinks-container`)
-        };
+        });
     }
 }
 
@@ -1057,6 +1196,12 @@ function updateMealSummary(mealName, mealData) {
     const dateStr = formatDateString(currentDate);
     const locationText = mealData.location === 'remote' ? ' 🌍 (Remote)' : ' 🏠 (Home)';
 
+    const moodRating = normalizeFoodMoodRating(mealData.moodRating);
+    const moodNote = moodRating !== null && mealData.moodNote ? String(mealData.moodNote).trim() : '';
+    const moodText = moodRating !== null
+        ? `<span class="summary-food-mood">${renderFoodMoodStars(moodRating)} ${moodRating}/5</span>${moodNote ? `<span class="summary-food-mood-note">${escapeHtml(moodNote)}</span>` : ''}<br>`
+        : '';
+
     const isAnytimeCoffee = mealName === 'anytime_coffee';
     const isAnytimeSnack = mealName === 'anytime_snack';
     
@@ -1154,7 +1299,7 @@ function updateMealSummary(mealName, mealData) {
         }
     }
 
-    summaryText.innerHTML = text.join('<br>') + `<br><small>${locationText}</small>`;
+    summaryText.innerHTML = text.join('<br>') + `<br>${moodText}<small>${locationText}</small>`;
 }
 
 async function loadDailyLog(dateObj) {
@@ -1164,12 +1309,15 @@ async function loadDailyLog(dateObj) {
     resetForm();
     updateDailyGroupLabels();
     updateDailyVitalityTrends();
+    updateDailyFoodMoodRating(log);
     
     if (log) {
         // Populate Breakfast
         if (log.breakfast) {
             setSkipped('breakfast', log.breakfast.skipped);
             setRemote('breakfast', log.breakfast.location === 'remote');
+            setFoodMoodRating('breakfast', log.breakfast.moodRating);
+            setFoodMoodNote('breakfast', log.breakfast.moodNote);
             if (!log.breakfast.skipped) {
                 checkCheckboxes('breakfast-items-container', log.breakfast.items || []);
                 checkCheckboxes('breakfast-coffee-container', log.breakfast.coffeeIds || []);
@@ -1181,6 +1329,8 @@ async function loadDailyLog(dateObj) {
         if (log.lunch) {
             setSkipped('lunch', log.lunch.skipped);
             setRemote('lunch', log.lunch.location === 'remote');
+            setFoodMoodRating('lunch', log.lunch.moodRating);
+            setFoodMoodNote('lunch', log.lunch.moodNote);
             if (!log.lunch.skipped) {
                 setSelect('lunch-soup', log.lunch.soupId);
                 setSelect('lunch-main', log.lunch.mainId);
@@ -1195,6 +1345,8 @@ async function loadDailyLog(dateObj) {
         if (log.dinner) {
             setSkipped('dinner', log.dinner.skipped);
             setRemote('dinner', log.dinner.location === 'remote');
+            setFoodMoodRating('dinner', log.dinner.moodRating);
+            setFoodMoodNote('dinner', log.dinner.moodNote);
             if (!log.dinner.skipped) {
                 setSelect('dinner-soup', log.dinner.soupId);
                 setSelect('dinner-main', log.dinner.mainId);
@@ -1218,6 +1370,8 @@ async function loadDailyLog(dateObj) {
         if (log.anytime_snack) {
             setSkipped('anytime_snack', log.anytime_snack.skipped);
             setRemote('anytime_snack', log.anytime_snack.location === 'remote');
+            setFoodMoodRating('anytime_snack', log.anytime_snack.moodRating);
+            setFoodMoodNote('anytime_snack', log.anytime_snack.moodNote);
             if (!log.anytime_snack.skipped) {
                 renderAnytimeSnackEntryRows(getAnytimeSnackEntriesFromMeal(log.anytime_snack));
             }
@@ -1262,6 +1416,8 @@ function resetForm() {
     if (anytimeSnackTime) anytimeSnackTime.value = formatTimeString();
     renderAnytimeCoffeeEntryRows([]);
     renderAnytimeSnackEntryRows([]);
+    FOOD_MOOD_MEALS.forEach(meal => setFoodMoodRating(meal, null));
+    FOOD_MOOD_MEALS.forEach(meal => setFoodMoodNote(meal, ''));
 }
 
 function setSkipped(mealName, isSkipped) {
@@ -1427,6 +1583,7 @@ function refreshFoodUI() {
     renderGroupCheckboxes(ingredientGroups);
     updateDailyVitalityTrends();
     renderVitalityView();
+    renderMoodView();
 }
 
 function renderVitalityView() {
@@ -1458,6 +1615,118 @@ function renderVitalityView() {
             </div>
         `;
     }).join('');
+    applyLocalIconFallback(list);
+}
+
+function getFoodMoodPercentage(rating) {
+    const normalized = normalizeFoodMoodRating(rating);
+    return normalized === null ? null : normalized * 20;
+}
+
+function getMoodFoodNames(mealName, mealData) {
+    const names = [];
+    const addName = (id, prefix = '') => {
+        const name = getFoodName(id);
+        if (name) names.push(prefix ? `${prefix}: ${name}` : name);
+    };
+
+    if (mealName === 'breakfast') {
+        (mealData.items || []).forEach(id => addName(id));
+        (mealData.coffeeIds || []).forEach(id => addName(id, 'Coffee'));
+        (mealData.drinkIds || []).forEach(id => addName(id, 'Drink'));
+        return names;
+    }
+
+    if (mealName === 'anytime_snack') {
+        return getAnytimeSnackEntriesFromMeal(mealData)
+            .map(entry => {
+                const name = getFoodName(entry.id);
+                if (!name) return null;
+                return entry.time ? `${entry.time} ${name}` : name;
+            })
+            .filter(Boolean);
+    }
+
+    addName(mealData.soupId, 'Soup');
+    addName(mealData.mainId, 'Main');
+    (mealData.sideIds || []).forEach(id => addName(id, 'Side'));
+    addName(mealData.dessertId, 'Dessert');
+    (mealData.coffeeIds || []).forEach(id => addName(id, 'Coffee'));
+    (mealData.drinkIds || []).forEach(id => addName(id, 'Drink'));
+    return names;
+}
+
+export function getMoodNoteEntries(logs = []) {
+    return logs.flatMap(log => FOOD_MOOD_MEALS.map(mealName => {
+        const mealData = log?.[mealName];
+        const rating = normalizeFoodMoodRating(mealData?.moodRating);
+        const note = rating !== null && !mealData?.skipped ? String(mealData.moodNote || '').trim() : '';
+        if (!mealData || mealData.skipped || rating === null || !note) return null;
+
+        return {
+            date: log.date,
+            mealName,
+            mealLabel: FOOD_MOOD_MEAL_LABELS[mealName],
+            rating,
+            percentage: getFoodMoodPercentage(rating),
+            note,
+            foods: getMoodFoodNames(mealName, mealData)
+        };
+    }).filter(Boolean));
+}
+
+function initMoodView() {
+    ['mood-filter-rating', 'mood-sort-order'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) input.addEventListener('change', () => renderMoodView());
+    });
+}
+
+async function renderMoodView() {
+    const list = document.getElementById('mood-notes-list');
+    if (!list) return;
+
+    const minPercentage = Number(document.getElementById('mood-filter-rating')?.value || 0);
+    const sortOrder = document.getElementById('mood-sort-order')?.value || 'desc';
+    const logs = await getCachedDailyLogs();
+    const entries = getMoodNoteEntries(logs)
+        .filter(entry => entry.percentage >= minPercentage)
+        .sort((a, b) => {
+            const dateCompare = sortOrder === 'asc'
+                ? a.date.localeCompare(b.date)
+                : b.date.localeCompare(a.date);
+            return dateCompare || a.mealLabel.localeCompare(b.mealLabel);
+        });
+
+    if (entries.length === 0) {
+        list.innerHTML = '<p style="color: var(--text-secondary); margin: 0;">No Food-Mood notes match the current filter.</p>';
+        return;
+    }
+
+    list.innerHTML = entries.map(entry => `
+        <article class="mood-note-row">
+            <div class="mood-note-main">
+                <div class="mood-note-title">
+                    <span>${escapeHtml(entry.date)}</span>
+                    <span class="mood-note-meta">${escapeHtml(entry.mealLabel)}</span>
+                    <span class="mood-note-rating">${renderFoodMoodStars(entry.rating)} ${entry.percentage}%</span>
+                </div>
+                <div class="mood-note-foods">${entry.foods.length ? escapeHtml(entry.foods.join(', ')) : 'No food details logged'}</div>
+                <div class="mood-note-text">${escapeHtml(entry.note)}</div>
+            </div>
+            <button class="btn btn-open-mood-date" type="button" data-date="${escapeHtml(entry.date)}">
+                <span class="material-icons">navigate_next</span> Open Day
+            </button>
+        </article>
+    `).join('');
+
+    list.querySelectorAll('.btn-open-mood-date').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentDate = parseDateString(btn.dataset.date);
+            updateDateDisplay();
+            document.getElementById('nav-daily').click();
+        });
+    });
     applyLocalIconFallback(list);
 }
 
@@ -1985,6 +2254,14 @@ function parseIds(value) {
     return text ? text.split(',').map(Number).filter(Number.isFinite) : [];
 }
 
+function formatFoodMoodRating(value) {
+    return normalizeFoodMoodRating(value) ?? '';
+}
+
+function formatFoodMoodNote(meal) {
+    return !meal?.skipped && normalizeFoodMoodRating(meal?.moodRating) !== null ? (meal.moodNote || '') : '';
+}
+
 function csvRow(fields) {
     return fields.map(csvEscape).join(';') + '\n';
 }
@@ -2003,24 +2280,24 @@ export function buildDbBackupCsv(foods = [], groups = [], logs = []) {
     });
 
     // Logs:
-    // Breakfast: LB;date;location;skipped;items;coffeeIds;drinkIds
-    // Lunch: LL;date;location;skipped;soupId;mainId;sideIds;dessertId;coffeeIds;drinkIds
-    // Dinner: LD;date;location;skipped;soupId;mainId;sideIds;dessertId;coffeeIds;drinkIds
+    // Breakfast: LB;date;location;skipped;items;coffeeIds;drinkIds;moodRating;moodNote
+    // Lunch: LL;date;location;skipped;soupId;mainId;sideIds;dessertId;coffeeIds;drinkIds;moodRating;moodNote
+    // Dinner: LD;date;location;skipped;soupId;mainId;sideIds;dessertId;coffeeIds;drinkIds;moodRating;moodNote
     // Anytime Coffee: LC;date;location;skipped;entries (id@HH:MM,id@HH:MM)
-    // Anytime Snack: LS;date;location;skipped;entries (id@HH:MM,id@HH:MM)
+    // Anytime Snack: LS;date;location;skipped;entries (id@HH:MM,id@HH:MM);moodRating;moodNote
     logs.forEach(l => {
         const date = l.date;
         if (l.breakfast) {
             const b = l.breakfast;
-            csvContent += csvRow(['LB', date, b.location || 'home', b.skipped ? '1' : '0', joinIds(b.items), joinIds(b.coffeeIds), joinIds(b.drinkIds)]);
+            csvContent += csvRow(['LB', date, b.location || 'home', b.skipped ? '1' : '0', joinIds(b.items), joinIds(b.coffeeIds), joinIds(b.drinkIds), formatFoodMoodRating(b.moodRating), formatFoodMoodNote(b)]);
         }
         if (l.lunch) {
             const lu = l.lunch;
-            csvContent += csvRow(['LL', date, lu.location || 'home', lu.skipped ? '1' : '0', lu.soupId || '', lu.mainId || '', joinIds(lu.sideIds), lu.dessertId || '', joinIds(lu.coffeeIds), joinIds(lu.drinkIds)]);
+            csvContent += csvRow(['LL', date, lu.location || 'home', lu.skipped ? '1' : '0', lu.soupId || '', lu.mainId || '', joinIds(lu.sideIds), lu.dessertId || '', joinIds(lu.coffeeIds), joinIds(lu.drinkIds), formatFoodMoodRating(lu.moodRating), formatFoodMoodNote(lu)]);
         }
         if (l.dinner) {
             const d = l.dinner;
-            csvContent += csvRow(['LD', date, d.location || 'home', d.skipped ? '1' : '0', d.soupId || '', d.mainId || '', joinIds(d.sideIds), d.dessertId || '', joinIds(d.coffeeIds), joinIds(d.drinkIds)]);
+            csvContent += csvRow(['LD', date, d.location || 'home', d.skipped ? '1' : '0', d.soupId || '', d.mainId || '', joinIds(d.sideIds), d.dessertId || '', joinIds(d.coffeeIds), joinIds(d.drinkIds), formatFoodMoodRating(d.moodRating), formatFoodMoodNote(d)]);
         }
         if (l.anytime_coffee) {
             const c = l.anytime_coffee;
@@ -2030,7 +2307,7 @@ export function buildDbBackupCsv(foods = [], groups = [], logs = []) {
         if (l.anytime_snack) {
             const s = l.anytime_snack;
             const entries = getAnytimeSnackEntriesFromMeal(s).map(entry => `${entry.id}@${entry.time || ''}`).join(',');
-            csvContent += csvRow(['LS', date, s.location || 'home', s.skipped ? '1' : '0', entries]);
+            csvContent += csvRow(['LS', date, s.location || 'home', s.skipped ? '1' : '0', entries, formatFoodMoodRating(s.moodRating), formatFoodMoodNote(s)]);
         }
     });
 
@@ -2071,13 +2348,19 @@ export function parseDbBackupCsv(content) {
             const skipped = parts[3] === '1';
 
             if (type === 'LB') {
-                logsMap[date].breakfast = {
+                const meal = {
                     skipped,
                     location,
                     items: parseIds(parts[4]),
                     coffeeIds: parseIds(parts[5]),
                     drinkIds: parseIds(parts[6])
                 };
+                const moodRating = normalizeFoodMoodRating(parts[7]);
+                if (moodRating !== null) {
+                    meal.moodRating = moodRating;
+                    if (parts[8]) meal.moodNote = parts[8];
+                }
+                logsMap[date].breakfast = meal;
             } else if (type === 'LC') {
                 const entriesStr = parts[4] ? parts[4].trim() : '';
                 const entries = entriesStr ? entriesStr.split(',').map(value => {
@@ -2091,10 +2374,16 @@ export function parseDbBackupCsv(content) {
                     const [id, time = ''] = value.split('@');
                     return { id: Number(id), time };
                 }).filter(entry => entry.id) : [];
-                logsMap[date].anytime_snack = { skipped, location, entries };
+                const meal = { skipped, location, entries };
+                const moodRating = normalizeFoodMoodRating(parts[5]);
+                if (moodRating !== null) {
+                    meal.moodRating = moodRating;
+                    if (parts[6]) meal.moodNote = parts[6];
+                }
+                logsMap[date].anytime_snack = meal;
             } else {
                 const mealName = type === 'LL' ? 'lunch' : 'dinner';
-                logsMap[date][mealName] = {
+                const meal = {
                     skipped,
                     location,
                     soupId: parts[4] ? Number(parts[4]) : null,
@@ -2104,6 +2393,12 @@ export function parseDbBackupCsv(content) {
                     coffeeIds: parseIds(parts[8]),
                     drinkIds: parseIds(parts[9])
                 };
+                const moodRating = normalizeFoodMoodRating(parts[10]);
+                if (moodRating !== null) {
+                    meal.moodRating = moodRating;
+                    if (parts[11]) meal.moodNote = parts[11];
+                }
+                logsMap[date][mealName] = meal;
             }
         }
     });

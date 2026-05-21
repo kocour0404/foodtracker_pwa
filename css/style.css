@@ -291,6 +291,12 @@ body {
     max-width: min(520px, 70vw);
 }
 
+.daily-food-mood {
+    display: flex;
+    justify-content: center;
+    min-height: 24px;
+}
+
 .vitality-trend-chip {
     display: inline-flex;
     align-items: center;
@@ -306,6 +312,28 @@ body {
 
 .vitality-trend-chip .material-icons {
     font-size: 14px;
+}
+
+.food-mood-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(255, 202, 40, 0.45);
+    border-radius: 999px;
+    padding: 4px 10px;
+    color: #ffd54f;
+    font-size: 0.78rem;
+    line-height: 1;
+    background-color: rgba(255, 202, 40, 0.08);
+}
+
+.food-mood-chip-label {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.food-mood-chip-value {
+    color: var(--text-secondary);
 }
 
 .vitality-trend-chip.increasing {
@@ -541,6 +569,136 @@ body {
     height: 18px;
     accent-color: var(--primary-color);
     cursor: pointer;
+}
+
+.food-mood-group {
+    margin-top: var(--spacing-sm);
+    display: grid;
+    grid-template-columns: auto minmax(220px, 1fr);
+    gap: var(--spacing-sm) var(--spacing-md);
+    align-items: start;
+}
+
+.food-mood-group > label {
+    grid-column: 1 / -1;
+}
+
+.food-mood-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 6px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.38);
+    border-radius: 4px;
+}
+
+.food-mood-rating label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.food-mood-rating input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.food-mood-rating span {
+    color: rgba(255, 255, 255, 0.38);
+    font-size: 1.35rem;
+    line-height: 1;
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.food-mood-rating label.is-active span,
+.food-mood-rating label:hover span {
+    color: #ffd54f;
+}
+
+.food-mood-rating label:hover span {
+    transform: translateY(-1px);
+}
+
+.food-mood-rating .clear-food-mood {
+    margin-left: 6px;
+    color: var(--text-secondary);
+}
+
+.food-mood-note {
+    min-height: 46px;
+    resize: vertical;
+}
+
+.summary-food-mood {
+    color: #ffd54f;
+    font-weight: 700;
+}
+
+.summary-food-mood-note {
+    display: block;
+    margin-top: 2px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.mood-filter-bar {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.mood-notes-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.mood-note-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--spacing-md);
+    align-items: start;
+    padding: var(--spacing-md);
+    background-color: var(--surface-color);
+    border-radius: var(--border-radius);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.mood-note-main {
+    min-width: 0;
+}
+
+.mood-note-title {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 4px;
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.mood-note-meta,
+.mood-note-foods {
+    color: var(--text-secondary);
+    font-size: 0.86rem;
+}
+
+.mood-note-text {
+    margin-top: var(--spacing-sm);
+    color: var(--text-primary);
+    overflow-wrap: anywhere;
+}
+
+.mood-note-rating {
+    color: #ffd54f;
+    white-space: nowrap;
 }
 
 .coffee-entry-editor {
@@ -1157,11 +1315,13 @@ input:checked + .slider:before {
         flex: 1;
     }
 
-    .daily-vitality-trends {
+    .daily-vitality-trends,
+    .daily-food-mood {
         max-width: 100%;
     }
 
-    .vitality-trend-chip {
+    .vitality-trend-chip,
+    .food-mood-chip {
         max-width: 100%;
         min-height: 24px;
     }
@@ -1214,7 +1374,8 @@ input:checked + .slider:before {
     }
 
     .add-food-form,
-    .coffee-entry-editor {
+    .coffee-entry-editor,
+    .mood-filter-bar {
         flex-direction: column;
         align-items: stretch;
         gap: var(--spacing-sm);
@@ -1230,6 +1391,19 @@ input:checked + .slider:before {
     .coffee-time-field {
         width: 100%;
         flex: 1 1 auto;
+    }
+
+    .food-mood-group {
+        grid-template-columns: 1fr;
+    }
+
+    .food-mood-rating {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .mood-note-row {
+        grid-template-columns: 1fr;
     }
 
     .coffee-entry-row {
@@ -1362,11 +1536,13 @@ input:checked + .slider:before {
     }
 
     .daily-labels-container,
-    .daily-vitality-trends {
+    .daily-vitality-trends,
+    .daily-food-mood {
         gap: 3px;
     }
 
-    .vitality-trend-chip {
+    .vitality-trend-chip,
+    .food-mood-chip {
         font-size: 0.68rem;
         padding: 3px 6px;
     }

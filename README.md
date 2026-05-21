@@ -16,6 +16,7 @@
     *   **Anytime Snack:** A matching card for tracking snack-category items throughout the day with multiple time-stamped entries.
     *   **Skip Meal:** Checkbox/Toggle to mark a meal as skipped for the day.
     *   **Location:** Toggle whether the meal was eaten at Home 🏠 or Remote 🌍.
+    *   **Food-Mood:** Optional 1-5 star mood rating plus internal note for Breakfast, Lunch, Dinner, and Anytime Snack, with a daily average shown in stars and percent.
     *   **Time-Aware Logging:** The UI dynamically shows or hides meals based on the current time of day.
     *   **Meal Summaries:** Once saved, meals are presented in a clean, read-only summary card with options to edit or delete.
     *   **Inline Date Navigation:** Quick previous and next day navigation directly from the daily view.
@@ -150,6 +151,12 @@ This project is licensed under the Apache License 2.0. See [`LICENSE`](LICENSE) 
 *   Converted the top navigation into a labeled burger menu on small screens.
 *   Improved wrapping and spacing for Daily cards, summaries, vitality chips, Calendar labels, Reports controls, and chart containers.
 *   Added mobile-focused CSS breakpoints while keeping the desktop layout intact.
+
+### Completed: Food-Mood Ratings
+*   Added optional 1-5 star Food-Mood ratings to Breakfast, Lunch, Dinner, and Anytime Snack.
+*   Added a Daily header average that only includes captured ratings and shows stars plus percentage.
+*   Added optional internal notes connected to rated Food-Mood entries and a Mood Notes page with rating and date filters.
+*   Extended database backup CSV export/import to preserve Food-Mood ratings and notes while keeping older CSV files compatible.
 
 ### Completed: Licensing
 *   Added Apache License 2.0.

@@ -22,6 +22,7 @@
             <button class="icon-btn" title="Daily Log" id="nav-daily"><span class="material-icons">edit_note</span></button>
             <button class="icon-btn" title="Calendar" id="nav-calendar"><span class="material-icons">calendar_today</span></button>
             <button class="icon-btn" title="Vitality" id="nav-vitality"><span class="material-icons">monitor_heart</span></button>
+            <button class="icon-btn" title="Mood Notes" id="nav-mood"><span class="material-icons">mood</span></button>
             <button class="icon-btn" title="Search" id="nav-search"><span class="material-icons">search</span></button>
             <button class="icon-btn" title="Reports" id="nav-reports"><span class="material-icons">bar_chart</span></button>
             <button class="icon-btn" title="Suggestions" id="nav-suggestions"><span class="material-icons">lightbulb</span></button>
@@ -37,6 +38,7 @@
                 <h2 id="current-date-display">Today</h2>
                 <div class="daily-labels-container" id="daily-group-labels"></div>
                 <div class="daily-vitality-trends" id="daily-vitality-trends"></div>
+                <div class="daily-food-mood" id="daily-food-mood"></div>
             </div>
             <button class="icon-btn" id="next-day"><span class="material-icons">chevron_right</span></button>
         </header>
@@ -97,6 +99,20 @@
                                 <!-- Injected dynamically -->
                             </div>
                         </details>
+                    </div>
+                    <div class="form-group food-mood-group">
+                        <label>Food-Mood</label>
+                        <div class="food-mood-rating" id="food-mood-breakfast" role="radiogroup" aria-label="Food-Mood Breakfast">
+                            <label><input type="radio" name="food-mood-breakfast" value="1"><span>&#9733;</span></label>
+                            <label><input type="radio" name="food-mood-breakfast" value="2"><span>&#9733;</span></label>
+                            <label><input type="radio" name="food-mood-breakfast" value="3"><span>&#9733;</span></label>
+                            <label><input type="radio" name="food-mood-breakfast" value="4"><span>&#9733;</span></label>
+                            <label><input type="radio" name="food-mood-breakfast" value="5"><span>&#9733;</span></label>
+                            <button class="btn-icon-small clear-food-mood" type="button" data-meal="breakfast" title="Clear Food-Mood">
+                                <span class="material-icons">close</span>
+                            </button>
+                        </div>
+                        <textarea id="food-mood-note-breakfast" class="material-input food-mood-note" rows="2" placeholder="Internal note"></textarea>
                     </div>
                     <button class="btn btn-primary save-meal-btn" data-meal="breakfast" style="margin-top: var(--spacing-md); width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
                         <span class="material-icons">save</span> Save Breakfast
@@ -192,6 +208,20 @@
                             </div>
                         </details>
                     </div>
+                    <div class="form-group food-mood-group">
+                        <label>Food-Mood</label>
+                        <div class="food-mood-rating" id="food-mood-lunch" role="radiogroup" aria-label="Food-Mood Lunch">
+                            <label><input type="radio" name="food-mood-lunch" value="1"><span>&#9733;</span></label>
+                            <label><input type="radio" name="food-mood-lunch" value="2"><span>&#9733;</span></label>
+                            <label><input type="radio" name="food-mood-lunch" value="3"><span>&#9733;</span></label>
+                            <label><input type="radio" name="food-mood-lunch" value="4"><span>&#9733;</span></label>
+                            <label><input type="radio" name="food-mood-lunch" value="5"><span>&#9733;</span></label>
+                            <button class="btn-icon-small clear-food-mood" type="button" data-meal="lunch" title="Clear Food-Mood">
+                                <span class="material-icons">close</span>
+                            </button>
+                        </div>
+                        <textarea id="food-mood-note-lunch" class="material-input food-mood-note" rows="2" placeholder="Internal note"></textarea>
+                    </div>
                     <button class="btn btn-primary save-meal-btn" data-meal="lunch" style="margin-top: var(--spacing-md); width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
                         <span class="material-icons">save</span> Save Lunch
                     </button>
@@ -285,6 +315,20 @@
                                 <!-- Injected dynamically -->
                             </div>
                         </details>
+                    </div>
+                    <div class="form-group food-mood-group">
+                        <label>Food-Mood</label>
+                        <div class="food-mood-rating" id="food-mood-dinner" role="radiogroup" aria-label="Food-Mood Dinner">
+                            <label><input type="radio" name="food-mood-dinner" value="1"><span>&#9733;</span></label>
+                            <label><input type="radio" name="food-mood-dinner" value="2"><span>&#9733;</span></label>
+                            <label><input type="radio" name="food-mood-dinner" value="3"><span>&#9733;</span></label>
+                            <label><input type="radio" name="food-mood-dinner" value="4"><span>&#9733;</span></label>
+                            <label><input type="radio" name="food-mood-dinner" value="5"><span>&#9733;</span></label>
+                            <button class="btn-icon-small clear-food-mood" type="button" data-meal="dinner" title="Clear Food-Mood">
+                                <span class="material-icons">close</span>
+                            </button>
+                        </div>
+                        <textarea id="food-mood-note-dinner" class="material-input food-mood-note" rows="2" placeholder="Internal note"></textarea>
                     </div>
                     <button class="btn btn-primary save-meal-btn" data-meal="dinner" style="margin-top: var(--spacing-md); width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
                         <span class="material-icons">save</span> Save Dinner
@@ -420,6 +464,20 @@
                     <div id="anytime_snack-items-container" style="display: none;">
                         <!-- Backward-compatible hidden container; no longer used for editing -->
                     </div>
+                    <div class="form-group food-mood-group">
+                        <label>Food-Mood</label>
+                        <div class="food-mood-rating" id="food-mood-anytime_snack" role="radiogroup" aria-label="Food-Mood Anytime Snack">
+                            <label><input type="radio" name="food-mood-anytime_snack" value="1"><span>&#9733;</span></label>
+                            <label><input type="radio" name="food-mood-anytime_snack" value="2"><span>&#9733;</span></label>
+                            <label><input type="radio" name="food-mood-anytime_snack" value="3"><span>&#9733;</span></label>
+                            <label><input type="radio" name="food-mood-anytime_snack" value="4"><span>&#9733;</span></label>
+                            <label><input type="radio" name="food-mood-anytime_snack" value="5"><span>&#9733;</span></label>
+                            <button class="btn-icon-small clear-food-mood" type="button" data-meal="anytime_snack" title="Clear Food-Mood">
+                                <span class="material-icons">close</span>
+                            </button>
+                        </div>
+                        <textarea id="food-mood-note-anytime_snack" class="material-input food-mood-note" rows="2" placeholder="Internal note"></textarea>
+                    </div>
                     <button class="btn btn-primary save-meal-btn" data-meal="anytime_snack" style="margin-top: var(--spacing-md); width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
                         <span class="material-icons">save</span> Save Anytime Snack
                     </button>
@@ -427,6 +485,46 @@
             </div>
         </section>
         
+    </main>
+
+    <!-- Mood Notes View -->
+    <main class="container view" id="view-mood">
+        <header class="view-header">
+            <h2>Mood Notes</h2>
+        </header>
+
+        <div class="card">
+            <div class="card-content mood-filter-bar">
+                <div class="form-group flex-1">
+                    <label for="mood-filter-rating">Minimum Rating</label>
+                    <div class="select-wrapper">
+                        <select id="mood-filter-rating" class="material-select">
+                            <option value="0">0%</option>
+                            <option value="20">20%</option>
+                            <option value="40">40%</option>
+                            <option value="60">60%</option>
+                            <option value="80">80%</option>
+                            <option value="100">100%</option>
+                        </select>
+                        <span class="material-icons select-arrow">arrow_drop_down</span>
+                    </div>
+                </div>
+                <div class="form-group flex-1">
+                    <label for="mood-sort-order">Date Order</label>
+                    <div class="select-wrapper">
+                        <select id="mood-sort-order" class="material-select">
+                            <option value="desc">Newest First</option>
+                            <option value="asc">Oldest First</option>
+                        </select>
+                        <span class="material-icons select-arrow">arrow_drop_down</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="mood-notes-list" class="mood-notes-list">
+            <!-- Injected dynamically -->
+        </div>
     </main>
 
     <!-- Vitality View -->
@@ -1192,11 +1290,11 @@
     <footer class="app-footer">
         <p>
             <a href="#privacy-section" id="privacy-footer-link" class="footer-link" aria-controls="privacy-section" aria-expanded="false">Datenschutz</a> · <a href="https://github.com/kocour0404/foodtracker_pwa" target="_blank" rel="noopener noreferrer" class="footer-link">
-                &copy; Stepan Kalina <span id="last-update-date">2026-05-20</span>
+                &copy; Stepan Kalina <span id="last-update-date">2026-05-21</span>
             </a>
         </p>
     </footer>
 
-    <script type="module" src="js/app.js?v=19"></script>
+    <script type="module" src="js/app.js?v=22"></script>
 </body>
 </html>

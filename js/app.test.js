@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { buildDbBackupCsv, capGroupLabel, formatGroupLabel, isMealEmpty, parseDbBackupCsv } from "./app.js";
+import { buildDbBackupCsv, calculateDailyFoodMoodRating, capGroupLabel, formatGroupLabel, getMoodNoteEntries, isMealEmpty, normalizeFoodMoodRating, parseDbBackupCsv } from "./app.js";
 
 describe("isMealEmpty", () => {
     test("should return true if meal is null or undefined", () => {
@@ -142,8 +142,9 @@ describe("database backup CSV", () => {
         const logs = [
             {
                 date: "2026-05-19",
-                breakfast: { location: "home", skipped: false, items: [1], coffeeIds: [], drinkIds: [] },
-                lunch: { location: "remote", skipped: false, soupId: null, mainId: 1, sideIds: [], dessertId: null, coffeeIds: [], drinkIds: [] }
+                breakfast: { location: "home", skipped: false, items: [1], coffeeIds: [], drinkIds: [], moodRating: 4, moodNote: "Good start; light" },
+                lunch: { location: "remote", skipped: false, soupId: null, mainId: 1, sideIds: [], dessertId: null, coffeeIds: [], drinkIds: [], moodRating: 5, moodNote: "Main was right" },
+                anytime_snack: { location: "home", skipped: false, entries: [{ id: 1, time: "15:30" }], moodRating: 3, moodNote: "Too dry" }
             }
         ];
 
@@ -154,12 +155,80 @@ describe("database backup CSV", () => {
         expect(parsed.logs).toEqual([
             {
                 date: "2026-05-19",
-                breakfast: { location: "home", skipped: false, items: [1], coffeeIds: [], drinkIds: [] },
-                lunch: { location: "remote", skipped: false, soupId: null, mainId: 1, sideIds: [], dessertId: null, coffeeIds: [], drinkIds: [] },
+                breakfast: { location: "home", skipped: false, items: [1], coffeeIds: [], drinkIds: [], moodRating: 4, moodNote: "Good start; light" },
+                lunch: { location: "remote", skipped: false, soupId: null, mainId: 1, sideIds: [], dessertId: null, coffeeIds: [], drinkIds: [], moodRating: 5, moodNote: "Main was right" },
                 dinner: {},
                 anytime_coffee: {},
-                anytime_snack: {}
+                anytime_snack: { location: "home", skipped: false, entries: [{ id: 1, time: "15:30" }], moodRating: 3, moodNote: "Too dry" }
             }
+        ]);
+    });
+
+    test("parses older CSV rows without mood ratings", () => {
+        const parsed = parseDbBackupCsv("LB;2026-05-20;home;0;1;;\n");
+
+        expect(parsed.logs[0].breakfast).toEqual({
+            skipped: false,
+            location: "home",
+            items: [1],
+            coffeeIds: [],
+            drinkIds: []
+        });
+    });
+});
+
+describe("food mood ratings", () => {
+    test("normalizes only 1-5 integer ratings", () => {
+        expect(normalizeFoodMoodRating(1)).toBe(1);
+        expect(normalizeFoodMoodRating("5")).toBe(5);
+        expect(normalizeFoodMoodRating(0)).toBe(null);
+        expect(normalizeFoodMoodRating(6)).toBe(null);
+        expect(normalizeFoodMoodRating(3.5)).toBe(null);
+        expect(normalizeFoodMoodRating("")).toBe(null);
+    });
+
+    test("averages only captured non-skipped food mood ratings", () => {
+        expect(calculateDailyFoodMoodRating({
+            breakfast: { skipped: false, moodRating: 5 },
+            lunch: { skipped: false },
+            dinner: { skipped: true, moodRating: 1 },
+            anytime_snack: { skipped: false, moodRating: 3 },
+            anytime_coffee: { skipped: false, moodRating: 1 }
+        })).toEqual({
+            average: 4,
+            stars: 4,
+            percentage: 80,
+            count: 2
+        });
+    });
+
+    test("returns null when no food mood rating was captured", () => {
+        expect(calculateDailyFoodMoodRating({
+            breakfast: { skipped: false },
+            lunch: { skipped: true, moodRating: 4 }
+        })).toBe(null);
+    });
+
+    test("lists only rated entries with notes", () => {
+        const entries = getMoodNoteEntries([
+            {
+                date: "2026-05-21",
+                breakfast: { skipped: false, items: [1], moodRating: 4, moodNote: "Nice" },
+                lunch: { skipped: false, moodRating: 5 },
+                dinner: { skipped: true, moodRating: 1, moodNote: "Ignored" },
+                anytime_snack: { skipped: false, entries: [], moodRating: 2, moodNote: "Snack note" }
+            }
+        ]);
+
+        expect(entries.map(entry => ({
+            date: entry.date,
+            mealName: entry.mealName,
+            rating: entry.rating,
+            percentage: entry.percentage,
+            note: entry.note
+        }))).toEqual([
+            { date: "2026-05-21", mealName: "breakfast", rating: 4, percentage: 80, note: "Nice" },
+            { date: "2026-05-21", mealName: "anytime_snack", rating: 2, percentage: 40, note: "Snack note" }
         ]);
     });
 });
