@@ -997,6 +997,7 @@ function renderAnytimeCoffeeEntryRows(entries = []) {
         });
     });
 
+    applyLocalIconFallback(list);
     updateAnytimeCoffeeEmptyState();
 }
 
@@ -1097,6 +1098,7 @@ function renderAnytimeSnackEntryRows(entries = []) {
         });
     });
 
+    applyLocalIconFallback(list);
     updateAnytimeSnackEmptyState();
 }
 
