@@ -309,6 +309,13 @@ export function calculateDailyFoodMoodRating(log) {
         .map(mealName => normalizeFoodMoodRating(log[mealName].moodRating))
         .filter(rating => rating !== null);
 
+    if (log?.anytime_coffee && !log.anytime_coffee.skipped && Array.isArray(log.anytime_coffee.entries)) {
+        log.anytime_coffee.entries.forEach(entry => {
+            const entryRating = normalizeFoodMoodRating(entry.rating);
+            if (entryRating !== null) ratings.push(entryRating);
+        });
+    }
+
     if (ratings.length === 0) {
         return null;
     }
@@ -931,6 +938,16 @@ function getCheckedValues(containerId) {
 
 function getSelectValue(selectId) {
     const select = document.getElementById(selectId);
+
+function getCheckedValues(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return [];
+    const checked = container.querySelectorAll('input[type="checkbox"]:checked');
+    return Array.from(checked).map(cb => Number(cb.value));
+}
+
+function getSelectValue(selectId) {
+    const select = document.getElementById(selectId);
     if (!select) return null;
     return select.value ? Number(select.value) : null;
 }
@@ -946,7 +963,10 @@ export function getAnytimeCoffeeEntriesFromMeal(meal) {
         return meal.entries
             .map(entry => ({
                 id: Number(entry.id),
-                time: entry.time || ''
+                time: entry.time || '',
+                rating: entry.rating || null,
+                note: entry.note || '',
+                location: entry.location || ''
             }))
             .filter(entry => entry.id);
     }
@@ -975,18 +995,34 @@ function renderAnytimeCoffeeEntryRows(entries = []) {
     const empty = document.getElementById('anytime_coffee-entries-empty');
     if (!list) return;
 
-    list.innerHTML = entries.map(entry => `
+    const isRemote = document.getElementById('remote-anytime_coffee')?.checked;
+
+    list.innerHTML = entries.map((entry, index) => `
         <li class="coffee-entry-row">
-            <div class="select-wrapper">
-                <select class="material-select anytime-coffee-entry-id">
-                    ${createCoffeeOptions(entry.id)}
-                </select>
-                <span class="material-icons select-arrow">arrow_drop_down</span>
+            <div class="coffee-entry-main">
+                <div class="select-wrapper">
+                    <select class="material-select anytime-coffee-entry-id">
+                        ${createCoffeeOptions(entry.id)}
+                    </select>
+                    <span class="material-icons select-arrow">arrow_drop_down</span>
+                </div>
+                <input type="time" class="material-input anytime-coffee-entry-time" value="${entry.time || ''}">
+                <button class="btn-icon-small delete-anytime-coffee-entry" type="button" title="Delete coffee entry">
+                    <span class="material-icons">delete</span>
+                </button>
             </div>
-            <input type="time" class="material-input anytime-coffee-entry-time" value="${entry.time || ''}">
-            <button class="btn-icon-small delete-anytime-coffee-entry" type="button" title="Delete coffee entry">
-                <span class="material-icons">delete</span>
-            </button>
+            <div class="coffee-entry-details">
+                <div class="food-mood-rating anytime-coffee-entry-rating" role="radiogroup" aria-label="Coffee Rating">
+                    <label class="${entry.rating >= 1 ? 'is-active' : ''}"><input type="radio" name="coffee-rating-${index}" value="1" ${entry.rating === 1 ? 'checked' : ''}><span>&#9733;</span></label>
+                    <label class="${entry.rating >= 2 ? 'is-active' : ''}"><input type="radio" name="coffee-rating-${index}" value="2" ${entry.rating === 2 ? 'checked' : ''}><span>&#9733;</span></label>
+                    <label class="${entry.rating >= 3 ? 'is-active' : ''}"><input type="radio" name="coffee-rating-${index}" value="3" ${entry.rating === 3 ? 'checked' : ''}><span>&#9733;</span></label>
+                    <label class="${entry.rating >= 4 ? 'is-active' : ''}"><input type="radio" name="coffee-rating-${index}" value="4" ${entry.rating === 4 ? 'checked' : ''}><span>&#9733;</span></label>
+                    <label class="${entry.rating >= 5 ? 'is-active' : ''}"><input type="radio" name="coffee-rating-${index}" value="5" ${entry.rating === 5 ? 'checked' : ''}><span>&#9733;</span></label>
+                    <button class="btn-icon-small clear-coffee-rating" type="button" title="Clear Rating"><span class="material-icons">close</span></button>
+                </div>
+                <input type="text" class="material-input anytime-coffee-entry-note" placeholder="Internal note" value="${escapeHtml(entry.note || '')}">
+                <input type="text" class="material-input anytime-coffee-entry-location" placeholder="Location name" value="${escapeHtml(entry.location || '')}" style="display: ${isRemote ? 'block' : 'none'}; flex: 1;">
+            </div>
         </li>
     `).join('');
 
@@ -994,6 +1030,25 @@ function renderAnytimeCoffeeEntryRows(entries = []) {
         btn.addEventListener('click', () => {
             btn.closest('.coffee-entry-row')?.remove();
             updateAnytimeCoffeeEmptyState();
+        });
+    });
+
+    list.querySelectorAll('.anytime-coffee-entry-rating input[type="radio"]').forEach(input => {
+        input.addEventListener('change', (e) => {
+            const container = e.target.closest('.anytime-coffee-entry-rating');
+            const val = Number(e.target.value);
+            container.querySelectorAll('label').forEach(label => {
+                const labelVal = Number(label.querySelector('input').value);
+                label.classList.toggle('is-active', labelVal <= val);
+            });
+        });
+    });
+
+    list.querySelectorAll('.clear-coffee-rating').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const container = e.target.closest('.anytime-coffee-entry-rating');
+            container.querySelectorAll('input[type="radio"]').forEach(input => input.checked = false);
+            container.querySelectorAll('label').forEach(label => label.classList.remove('is-active'));
         });
     });
 
@@ -1015,13 +1070,30 @@ function getAnytimeCoffeeEntries() {
     return Array.from(list.querySelectorAll('.coffee-entry-row'))
         .map(row => ({
             id: Number(row.querySelector('.anytime-coffee-entry-id')?.value),
-            time: row.querySelector('.anytime-coffee-entry-time')?.value || ''
+            time: row.querySelector('.anytime-coffee-entry-time')?.value || '',
+            rating: Number(row.querySelector('.anytime-coffee-entry-rating input:checked')?.value) || null,
+            note: row.querySelector('.anytime-coffee-entry-note')?.value || '',
+            location: row.querySelector('.anytime-coffee-entry-location')?.value || ''
         }))
         .filter(entry => entry.id);
 }
 
 function initAnytimeCoffeeEntries() {
     const addBtn = document.getElementById('btn-add-anytime-coffee');
+    const remoteCheckbox = document.getElementById('remote-anytime_coffee');
+    
+    if (remoteCheckbox) {
+        remoteCheckbox.addEventListener('change', (e) => {
+            const isRemote = e.target.checked;
+            const list = document.getElementById('anytime_coffee-entries-list');
+            if (list) {
+                list.querySelectorAll('.anytime-coffee-entry-location').forEach(input => {
+                    input.style.display = isRemote ? 'block' : 'none';
+                });
+            }
+        });
+    }
+
     if (!addBtn) return;
 
     addBtn.addEventListener('click', () => {
@@ -1262,7 +1334,19 @@ function updateMealSummary(mealName, mealData) {
                     const ingredientNames = food.ingredientIds.map(ingId => getFoodName(ingId)).join(', ');
                     ingredientsHtml = `<div style="font-size: 0.8rem; color: var(--text-secondary); margin-left: 24px;">Ingredients: ${ingredientNames}</div>`;
                 }
-                return `${escapeHtml(timeStr)}${escapeHtml(name)}${labelHtml}${ingredientsHtml}`;
+
+                let extraHtml = '';
+                if (entry.rating) {
+                    extraHtml += ` <span class="summary-food-mood" style="margin-left: 8px;">${renderFoodMoodStars(entry.rating)} ${entry.rating}/5</span>`;
+                }
+                if (entry.note) {
+                    extraHtml += ` <span class="summary-food-mood-note">${escapeHtml(entry.note)}</span>`;
+                }
+                if (entry.location && mealData.location === 'remote') {
+                    extraHtml += ` <span class="summary-location" style="font-size: 0.85rem; color: var(--text-secondary); margin-left: 8px;">📍 ${escapeHtml(entry.location)}</span>`;
+                }
+
+                return `${escapeHtml(timeStr)}${escapeHtml(name)}${labelHtml}${extraHtml}${ingredientsHtml}`;
             })
             .filter(Boolean);
     } else if (isAnytimeSnack) {
