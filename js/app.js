@@ -1800,11 +1800,11 @@ async function renderMoodView() {
     const entries = getMoodNoteEntries(logs)
         .filter(entry => {
             const p = entry.percentage;
-            if (p >= 0 && p < 20 && selectedIntervals.includes('0-19')) return true;
-            if (p >= 20 && p < 40 && selectedIntervals.includes('20-39')) return true;
-            if (p >= 40 && p < 60 && selectedIntervals.includes('40-59')) return true;
-            if (p >= 60 && p < 80 && selectedIntervals.includes('60-79')) return true;
-            if (p >= 80 && p <= 100 && selectedIntervals.includes('80-100')) return true;
+            if (p >= 0 && p <= 20 && selectedIntervals.includes('0-20')) return true;
+            if (p > 20 && p <= 40 && selectedIntervals.includes('21-40')) return true;
+            if (p > 40 && p <= 60 && selectedIntervals.includes('41-60')) return true;
+            if (p > 60 && p <= 80 && selectedIntervals.includes('61-80')) return true;
+            if (p > 80 && p <= 100 && selectedIntervals.includes('81-100')) return true;
             return false;
         })
         .filter(entry => mealFilter === 'all' || entry.mealName === mealFilter)
