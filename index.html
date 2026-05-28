@@ -510,15 +510,15 @@
                     </div>
                 </div>
                 <div class="form-group flex-1">
-                    <label>Rating Intervals</label>
-                    <details class="collapsible-group" style="background-color: transparent;">
-                        <summary style="padding: 12px 12px 12px 8px; border: 1px solid rgba(255, 255, 255, 0.38); border-radius: 4px;">Select intervals <span class="material-icons expand-icon">expand_more</span></summary>
-                        <div class="checkbox-group" style="padding: 12px; background: var(--surface-color); border: 1px solid rgba(255, 255, 255, 0.12); border-top: none; border-radius: 0 0 4px 4px;">
-                            <label class="checkbox-label"><input type="checkbox" name="mood-filter-interval" value="0-19" checked> [0, 20[ %</label>
-                            <label class="checkbox-label"><input type="checkbox" name="mood-filter-interval" value="20-39" checked> [20, 40[ %</label>
-                            <label class="checkbox-label"><input type="checkbox" name="mood-filter-interval" value="40-59" checked> [40, 60[ %</label>
-                            <label class="checkbox-label"><input type="checkbox" name="mood-filter-interval" value="60-79" checked> [60, 80[ %</label>
-                            <label class="checkbox-label"><input type="checkbox" name="mood-filter-interval" value="80-100" checked> [80, 100] %</label>
+                    <label>Rating Filter</label>
+                    <details class="collapsible-group" style="background-color: transparent; position: relative;">
+                        <summary style="padding: 12px; border: 1px solid rgba(255, 255, 255, 0.38); border-radius: 4px;">Select Ratings <span class="material-icons expand-icon">expand_more</span></summary>
+                        <div class="checkbox-group" style="position: absolute; top: 100%; left: 0; right: 0; z-index: 100; padding: 12px; background: var(--bg-color); border: 1px solid rgba(255, 255, 255, 0.38); border-top: none; border-radius: 0 0 4px 4px; box-shadow: 0 4px 6px rgba(0,0,0,0.5);">
+                            <label class="checkbox-label"><input type="checkbox" name="mood-filter-interval" value="0-19" checked> <span style="color: #ffd54f;">&#9733;</span></label>
+                            <label class="checkbox-label"><input type="checkbox" name="mood-filter-interval" value="20-39" checked> <span style="color: #ffd54f;">&#9733;&#9733;</span></label>
+                            <label class="checkbox-label"><input type="checkbox" name="mood-filter-interval" value="40-59" checked> <span style="color: #ffd54f;">&#9733;&#9733;&#9733;</span></label>
+                            <label class="checkbox-label"><input type="checkbox" name="mood-filter-interval" value="60-79" checked> <span style="color: #ffd54f;">&#9733;&#9733;&#9733;&#9733;</span></label>
+                            <label class="checkbox-label"><input type="checkbox" name="mood-filter-interval" value="80-100" checked> <span style="color: #ffd54f;">&#9733;&#9733;&#9733;&#9733;&#9733;</span></label>
                         </div>
                     </details>
                 </div>
