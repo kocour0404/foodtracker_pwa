@@ -1758,8 +1758,10 @@ export function getMoodNoteEntries(logs = []) {
                 const rating = normalizeFoodMoodRating(entry.rating);
                 const note = rating !== null ? String(entry.note || '').trim() : '';
                 if (rating !== null && note) {
-                    const name = window.foodDictionary?.[entry.id]?.name || 'Unknown Coffee';
-                    const foodStr = entry.time ? `${entry.time} ${name}` : name;
+                    const name = getFoodName(entry.id) || 'Unknown Coffee';
+                    let foodStr = name;
+                    if (entry.time) foodStr = `${entry.time} ${foodStr}`;
+                    if (entry.location) foodStr = `${foodStr} in ${entry.location}`;
                     coffeeEntries.push({
                         date: log.date,
                         mealName: 'anytime_coffee',
