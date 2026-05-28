@@ -938,16 +938,6 @@ function getCheckedValues(containerId) {
 
 function getSelectValue(selectId) {
     const select = document.getElementById(selectId);
-
-function getCheckedValues(containerId) {
-    const container = document.getElementById(containerId);
-    if (!container) return [];
-    const checked = container.querySelectorAll('input[type="checkbox"]:checked');
-    return Array.from(checked).map(cb => Number(cb.value));
-}
-
-function getSelectValue(selectId) {
-    const select = document.getElementById(selectId);
     if (!select) return null;
     return select.value ? Number(select.value) : null;
 }
