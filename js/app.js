@@ -1780,9 +1780,12 @@ export function getMoodNoteEntries(logs = []) {
 }
 
 function initMoodView() {
-    ['mood-filter-meal', 'mood-filter-rating', 'mood-sort-order'].forEach(id => {
+    ['mood-filter-meal', 'mood-sort-order'].forEach(id => {
         const input = document.getElementById(id);
         if (input) input.addEventListener('change', () => renderMoodView());
+    });
+    document.querySelectorAll('input[name="mood-filter-interval"]').forEach(cb => {
+        cb.addEventListener('change', () => renderMoodView());
     });
 }
 
@@ -1791,11 +1794,19 @@ async function renderMoodView() {
     if (!list) return;
 
     const mealFilter = document.getElementById('mood-filter-meal')?.value || 'all';
-    const maxPercentage = Number(document.getElementById('mood-filter-rating')?.value || 100);
+    const selectedIntervals = Array.from(document.querySelectorAll('input[name="mood-filter-interval"]:checked')).map(cb => cb.value);
     const sortOrder = document.getElementById('mood-sort-order')?.value || 'desc';
     const logs = await getCachedDailyLogs();
     const entries = getMoodNoteEntries(logs)
-        .filter(entry => maxPercentage === 0 || entry.percentage <= maxPercentage)
+        .filter(entry => {
+            const p = entry.percentage;
+            if (p >= 0 && p < 20 && selectedIntervals.includes('0-19')) return true;
+            if (p >= 20 && p < 40 && selectedIntervals.includes('20-39')) return true;
+            if (p >= 40 && p < 60 && selectedIntervals.includes('40-59')) return true;
+            if (p >= 60 && p < 80 && selectedIntervals.includes('60-79')) return true;
+            if (p >= 80 && p <= 100 && selectedIntervals.includes('80-100')) return true;
+            return false;
+        })
         .filter(entry => mealFilter === 'all' || entry.mealName === mealFilter)
         .sort((a, b) => {
             const dateCompare = sortOrder === 'asc'
