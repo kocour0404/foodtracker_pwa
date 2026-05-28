@@ -1733,26 +1733,52 @@ function getMoodFoodNames(mealName, mealData) {
 }
 
 export function getMoodNoteEntries(logs = []) {
-    return logs.flatMap(log => FOOD_MOOD_MEALS.map(mealName => {
-        const mealData = log?.[mealName];
-        const rating = normalizeFoodMoodRating(mealData?.moodRating);
-        const note = rating !== null && !mealData?.skipped ? String(mealData.moodNote || '').trim() : '';
-        if (!mealData || mealData.skipped || rating === null || !note) return null;
+    return logs.flatMap(log => {
+        const standardEntries = FOOD_MOOD_MEALS.map(mealName => {
+            const mealData = log?.[mealName];
+            const rating = normalizeFoodMoodRating(mealData?.moodRating);
+            const note = rating !== null && !mealData?.skipped ? String(mealData.moodNote || '').trim() : '';
+            if (!mealData || mealData.skipped || rating === null || !note) return null;
 
-        return {
-            date: log.date,
-            mealName,
-            mealLabel: FOOD_MOOD_MEAL_LABELS[mealName],
-            rating,
-            percentage: getFoodMoodPercentage(rating),
-            note,
-            foods: getMoodFoodNames(mealName, mealData)
-        };
-    }).filter(Boolean));
+            return {
+                date: log.date,
+                mealName,
+                mealLabel: FOOD_MOOD_MEAL_LABELS[mealName],
+                rating,
+                percentage: getFoodMoodPercentage(rating),
+                note,
+                foods: getMoodFoodNames(mealName, mealData)
+            };
+        });
+
+        const coffeeMeal = log?.anytime_coffee;
+        const coffeeEntries = [];
+        if (coffeeMeal && !coffeeMeal.skipped && Array.isArray(coffeeMeal.entries)) {
+            coffeeMeal.entries.forEach(entry => {
+                const rating = normalizeFoodMoodRating(entry.rating);
+                const note = rating !== null ? String(entry.note || '').trim() : '';
+                if (rating !== null && note) {
+                    const name = window.foodDictionary?.[entry.id]?.name || 'Unknown Coffee';
+                    const foodStr = entry.time ? `${entry.time} ${name}` : name;
+                    coffeeEntries.push({
+                        date: log.date,
+                        mealName: 'anytime_coffee',
+                        mealLabel: 'Coffee',
+                        rating,
+                        percentage: getFoodMoodPercentage(rating),
+                        note,
+                        foods: [foodStr]
+                    });
+                }
+            });
+        }
+
+        return [...standardEntries, ...coffeeEntries].filter(Boolean);
+    });
 }
 
 function initMoodView() {
-    ['mood-filter-rating', 'mood-sort-order'].forEach(id => {
+    ['mood-filter-meal', 'mood-filter-rating', 'mood-sort-order'].forEach(id => {
         const input = document.getElementById(id);
         if (input) input.addEventListener('change', () => renderMoodView());
     });
@@ -1762,11 +1788,13 @@ async function renderMoodView() {
     const list = document.getElementById('mood-notes-list');
     if (!list) return;
 
+    const mealFilter = document.getElementById('mood-filter-meal')?.value || 'all';
     const maxPercentage = Number(document.getElementById('mood-filter-rating')?.value || 100);
     const sortOrder = document.getElementById('mood-sort-order')?.value || 'desc';
     const logs = await getCachedDailyLogs();
     const entries = getMoodNoteEntries(logs)
         .filter(entry => maxPercentage === 0 || entry.percentage <= maxPercentage)
+        .filter(entry => mealFilter === 'all' || entry.mealName === mealFilter)
         .sort((a, b) => {
             const dateCompare = sortOrder === 'asc'
                 ? a.date.localeCompare(b.date)
