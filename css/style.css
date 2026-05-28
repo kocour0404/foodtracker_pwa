@@ -653,6 +653,10 @@ body {
     flex-wrap: wrap;
 }
 
+.mood-filter-bar .form-group {
+    margin-bottom: 0;
+}
+
 .mood-notes-list {
     display: flex;
     flex-direction: column;
